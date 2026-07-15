@@ -3,15 +3,27 @@
     <div v-if="visible" class="loading-screen">
       <div class="loading-content">
         <div class="loading-logo-wrapper">
-          <img
-            src="/logo_gkimenteng_nobg.png"
-            alt="GKI Menteng"
-            class="loading-logo"
-          />
+          <img src="/logo_gkimenteng.png" alt="GKI Menteng" class="loading-logo" />
           <div class="loading-cross">
             <svg viewBox="0 0 40 40" class="cross-svg" aria-hidden="true">
-              <line x1="20" y1="4" x2="20" y2="36" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
-              <line x1="8" y1="20" x2="32" y2="20" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+              <line
+                x1="20"
+                y1="4"
+                x2="20"
+                y2="36"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <line
+                x1="8"
+                y1="20"
+                x2="32"
+                y2="20"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
             </svg>
           </div>
         </div>
@@ -51,7 +63,7 @@ defineProps({
     type: String,
     default: "",
   },
-})
+});
 </script>
 
 <style scoped>
@@ -83,7 +95,9 @@ defineProps({
   width: 100px;
   height: auto;
   border-radius: 50%;
-  box-shadow: 0 0 40px rgba(201, 168, 76, 0.3), 0 0 80px rgba(201, 168, 76, 0.1);
+  box-shadow:
+    0 0 40px rgba(201, 168, 76, 0.3),
+    0 0 80px rgba(201, 168, 76, 0.1);
   animation: logoPulse 2.5s ease-in-out infinite;
   display: block;
 }
@@ -124,7 +138,12 @@ defineProps({
   margin: 0.15rem 0 1.5rem;
   letter-spacing: 4px;
   text-transform: uppercase;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-weight: 400;
   animation: fadeInUp 0.8s 0.15s ease-out both;
 }
@@ -161,7 +180,12 @@ defineProps({
   font-size: 0.75rem;
   color: rgba(201, 168, 76, 0.5);
   font-style: normal;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   margin: 0;
   animation: fadeInUp 0.8s 0.55s ease-out both;
 }
@@ -191,16 +215,22 @@ defineProps({
 }
 
 @keyframes logoPulse {
-  0%, 100% {
-    box-shadow: 0 0 40px rgba(201, 168, 76, 0.3), 0 0 80px rgba(201, 168, 76, 0.1);
+  0%,
+  100% {
+    box-shadow:
+      0 0 40px rgba(201, 168, 76, 0.3),
+      0 0 80px rgba(201, 168, 76, 0.1);
   }
   50% {
-    box-shadow: 0 0 60px rgba(201, 168, 76, 0.45), 0 0 100px rgba(201, 168, 76, 0.15);
+    box-shadow:
+      0 0 60px rgba(201, 168, 76, 0.45),
+      0 0 100px rgba(201, 168, 76, 0.15);
   }
 }
 
 @keyframes crossGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 2px 12px rgba(201, 168, 76, 0.5);
     transform: scale(1);
   }
@@ -231,7 +261,9 @@ defineProps({
 }
 
 @keyframes dotBounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0.6);
     opacity: 0.3;
   }
@@ -243,7 +275,9 @@ defineProps({
 
 .loading-fade-enter-active,
 .loading-fade-leave-active {
-  transition: opacity 0.5s ease, backdrop-filter 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    backdrop-filter 0.5s ease;
 }
 
 .loading-fade-enter-from,

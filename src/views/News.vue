@@ -36,7 +36,7 @@
                 <i class="bi bi-person me-1"></i>{{ article.author }}
               </small>
               <small class="text-muted">
-                <i class="bi bi-calendar me-1"></i>{{ article.date }}
+                <i class="bi bi-calendar me-1"></i>{{ article.startPublishDate || article.date }}{{ article.endPublishDate ? ' — ' + article.endPublishDate : '' }}
               </small>
               <small class="text-muted">
                 <i class="bi bi-chat me-1"></i>{{ (article.comments || []).length }} comments
@@ -144,7 +144,7 @@
             <div v-for="(post, index) in recentPosts" :key="post.id">
               <div>
                 <h6 class="mb-1" style="color: var(--burgundy);">{{ post.title }}</h6>
-                <small class="text-muted">{{ post.date }}</small>
+                <small class="text-muted">{{ post.startPublishDate || post.date }}{{ post.endPublishDate ? ' — ' + post.endPublishDate : '' }}</small>
               </div>
               <hr v-if="index < recentPosts.length - 1" class="church-divider-solid" />
             </div>
@@ -274,17 +274,30 @@
                       </div>
                     </div>
 
-                    <div class="mb-0">
-                      <label class="form-label small fw-semibold">Publish Date</label>
+                    <div class="mb-3">
+                      <label class="form-label small fw-semibold">Start Publish Date</label>
                       <div class="form-floating">
                         <input
-                          v-model="form.date"
-                          id="newsDate"
+                          v-model="form.startPublishDate"
+                          id="newsStartDate"
                           type="date"
                           class="form-control church-input"
                           @input="formError = ''"
                         />
-                        <label for="newsDate">Publish Date</label>
+                        <label for="newsStartDate">Start Publish Date</label>
+                      </div>
+                    </div>
+                    <div class="mb-0">
+                      <label class="form-label small fw-semibold">End Publish Date</label>
+                      <div class="form-floating">
+                        <input
+                          v-model="form.endPublishDate"
+                          id="newsEndDate"
+                          type="date"
+                          class="form-control church-input"
+                          @input="formError = ''"
+                        />
+                        <label for="newsEndDate">End Publish Date (optional)</label>
                       </div>
                     </div>
                   </div>
@@ -369,7 +382,7 @@ const saving = ref(false);
 const formError = ref("");
 
 const formValid = computed(() =>
-  form.value.title.trim() && form.value.content.trim() && form.value.category && form.value.author
+  form.value.title.trim() && form.value.content.trim() && form.value.category && form.value.author && form.value.startPublishDate
 );
 
 const form = ref({
@@ -377,21 +390,32 @@ const form = ref({
   content: "",
   category: "",
   author: "",
-  date: "",
-  searchDate: "",
+  startPublishDate: "",
+  endPublishDate: "",
 });
 
 const filteredArticles = computed(() => {
-  if (!selectedCategory.value) return nStore.articles;
-  return nStore.articles.filter((a) => a.category === selectedCategory.value);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().slice(0, 10);
+
+  return nStore.articles.filter((a) => {
+    const start = a.startPublishDate || a.date;
+    if (!start) return true;
+    if (start > todayStr) return false;
+    const end = a.endPublishDate;
+    if (end && end < todayStr) return false;
+    if (selectedCategory.value && a.category !== selectedCategory.value) return false;
+    return true;
+  });
 });
 
 const recentPosts = computed(() =>
-  nStore.articles.slice(0, 5).map((a) => ({ id: a.id, title: a.title, date: a.date }))
+  nStore.articles.slice(0, 5).map((a) => ({ id: a.id, title: a.title, date: a.startPublishDate || a.date, startPublishDate: a.startPublishDate, endPublishDate: a.endPublishDate }))
 );
 
 function emptyForm() {
-  form.value = { title: "", content: "", category: "", author: "", date: "", searchDate: "" };
+  form.value = { title: "", content: "", category: "", author: "", startPublishDate: "", endPublishDate: "" };
   formError.value = "";
 }
 
@@ -402,8 +426,7 @@ function openCreateModal() {
   emptyForm();
   form.value.author = userStore.displayName || userStore.email || "";
   const d = new Date();
-  form.value.date = d.toISOString().slice(0, 10);
-  form.value.searchDate = form.value.date;
+  form.value.startPublishDate = d.toISOString().slice(0, 10);
   showModal.value = true;
 }
 
@@ -416,8 +439,8 @@ function openEditModal(article) {
     content: article.content || "",
     category: article.category || "",
     author: article.author || "",
-    date: article.date || "",
-    searchDate: article.searchDate || article.date || "",
+    startPublishDate: article.startPublishDate || article.date || "",
+    endPublishDate: article.endPublishDate || "",
   };
   formError.value = "";
   showModal.value = true;
@@ -429,16 +452,18 @@ function openDeleteModal(article) {
 }
 
 async function handleSave() {
-  if (!form.value.title.trim() || !form.value.content.trim() || !form.value.category || !form.value.author) {
-    formError.value = "Title, content, category, and author are required.";
+  if (!form.value.title.trim() || !form.value.content.trim() || !form.value.category || !form.value.author || !form.value.startPublishDate) {
+    formError.value = "Title, content, category, author, and start publish date are required.";
     return;
   }
   saving.value = true;
+  const payload = { ...form.value };
+  if (!payload.endPublishDate) delete payload.endPublishDate;
   try {
     if (editing.value && editingId.value) {
-      await nStore.updateNews(editingId.value, form.value);
+      await nStore.updateNews(editingId.value, payload);
     } else {
-      await nStore.createNews(form.value);
+      await nStore.createNews(payload);
     }
     showModal.value = false;
     await nStore.fetchNews();

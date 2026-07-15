@@ -22,7 +22,7 @@ export const useNewsStore = defineStore("news", () => {
   async function fetchNews() {
     loading.value = true;
     try {
-      const q = query(collection(db, "news"), orderBy("searchDate", "desc"));
+      const q = query(collection(db, "news"), orderBy("startPublishDate", "desc"));
       const snapshot = await getDocs(q);
       articles.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     } catch {
