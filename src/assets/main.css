@@ -1,0 +1,1079 @@
+/* ========================================
+   CSS Custom Properties
+   ======================================== */
+
+:root {
+  --gold: #c9a84c;
+  --gold-light: #e0c97f;
+  --gold-dark: #a8882e;
+  --gold-glow: rgba(201, 168, 76, 0.25);
+
+  --burgundy: #722f37;
+  --burgundy-light: #8e3b45;
+  --burgundy-dark: #4a1d23;
+  --burgundy-deeper: #2e1217;
+
+  --cream: #f5f0e8;
+  --cream-light: #faf7f2;
+  --cream-dark: #e8dcc8;
+
+  --dark: #2c1810;
+  --dark-light: #4a3028;
+  --white: #ffffff;
+
+  --shadow-xs: 0 1px 3px rgba(44, 24, 16, 0.06);
+  --shadow-sm: 0 2px 8px rgba(44, 24, 16, 0.08);
+  --shadow-md: 0 8px 25px rgba(44, 24, 16, 0.1);
+  --shadow-lg: 0 12px 40px rgba(44, 24, 16, 0.15);
+  --shadow-gold: 0 4px 20px rgba(201, 168, 76, 0.25);
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+  --radius-xl: 40px;
+
+  --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.2s var(--ease-smooth);
+  --transition: 0.35s var(--ease-smooth);
+  --transition-slow: 0.5s var(--ease-smooth);
+}
+
+/* ========================================
+   Base & Reset
+   ======================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(160deg, var(--cream-light) 0%, var(--cream) 40%, var(--cream-dark) 100%);
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--dark);
+  min-height: 100vh;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+}
+
+/* Subtle background pattern */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(201, 168, 76, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(114, 47, 55, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(201, 168, 76, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--burgundy-dark);
+}
+
+/* ========================================
+   Typography
+   ======================================== */
+
+.section-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--burgundy);
+  position: relative;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 2px;
+}
+
+.section-title.text-start::after {
+  left: 0;
+  transform: none;
+}
+
+.lead {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--dark-light);
+}
+
+.text-muted {
+  color: #8a7a72 !important;
+}
+
+/* Verse style */
+.verse-text {
+  font-family: var(--font-heading);
+  font-style: italic;
+  color: var(--gold-dark);
+  line-height: 1.6;
+}
+
+.verse-ref {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--burgundy-light);
+  font-style: normal;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseGold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--gold-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes crossGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s var(--ease-smooth) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s var(--ease-smooth) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s var(--ease-smooth) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s var(--ease-smooth) forwards;
+}
+
+.animate-stagger-1 { animation-delay: 0.1s; }
+.animate-stagger-2 { animation-delay: 0.2s; }
+.animate-stagger-3 { animation-delay: 0.3s; }
+.animate-stagger-4 { animation-delay: 0.4s; }
+.animate-stagger-5 { animation-delay: 0.5s; }
+.animate-stagger-6 { animation-delay: 0.6s; }
+.animate-stagger-7 { animation-delay: 0.7s; }
+.animate-stagger-8 { animation-delay: 0.8s; }
+
+/* ========================================
+   Page Transition
+   ======================================== */
+
+.page-enter-active {
+  animation: fadeInUp 0.4s var(--ease-smooth);
+}
+
+.page-leave-active {
+  animation: fadeIn 0.2s var(--ease-smooth) reverse;
+}
+
+/* ========================================
+   Navigation
+   ======================================== */
+
+.navbar-church {
+  background: linear-gradient(135deg, var(--burgundy-deeper) 0%, var(--burgundy-dark) 40%, var(--burgundy) 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  border-bottom: 3px solid var(--gold);
+  padding: 0.5rem 0;
+  transition: box-shadow var(--transition), padding var(--transition);
+}
+
+.navbar-church.scrolled {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+  padding: 0.25rem 0;
+}
+
+.navbar-church .navbar-brand {
+  color: var(--gold) !important;
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: 1px;
+  transition: color var(--transition);
+  padding: 0.5rem 0;
+}
+
+.navbar-church .navbar-brand:hover {
+  color: var(--gold-light) !important;
+}
+
+.navbar-church .navbar-brand .bi-cross {
+  display: inline-block;
+  animation: crossGlow 3s ease-in-out infinite;
+}
+
+.navbar-church .nav-link {
+  color: rgba(245, 240, 232, 0.85) !important;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem !important;
+  margin: 0 2px;
+  border-radius: var(--radius-xs);
+  transition: all var(--transition);
+  position: relative;
+}
+
+.navbar-church .nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 60%;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 1px;
+  transition: transform var(--transition);
+}
+
+.navbar-church .nav-link:hover {
+  color: var(--gold) !important;
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.navbar-church .nav-link:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.navbar-church .nav-link.router-link-exact-active {
+  color: var(--gold) !important;
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.navbar-church .nav-link.router-link-exact-active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.navbar-church .navbar-toggler {
+  border: 2px solid var(--gold);
+  padding: 0.4rem 0.6rem;
+  transition: border-color var(--transition);
+}
+
+.navbar-church .navbar-toggler:focus {
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.navbar-church .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(201,168,76,0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Profile nav link */
+.navbar-church .nav-profile-link {
+  border-left: 1px solid rgba(201, 168, 76, 0.3);
+  padding-left: 1rem !important;
+  margin-left: 0.5rem;
+}
+
+.navbar-church .nav-profile-link .avatar-circle {
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.navbar-church .nav-profile-link:hover .avatar-circle {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+@media (max-width: 991.98px) {
+  .navbar-church .navbar-collapse {
+    background: linear-gradient(180deg, var(--burgundy-dark) 0%, var(--burgundy-deeper) 100%);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid var(--gold);
+  }
+
+  .navbar-church .nav-profile-link {
+    border-left: none;
+    padding-left: 0 !important;
+    margin-left: 0;
+  }
+
+  .navbar-church .nav-link::after {
+    display: none;
+  }
+}
+
+/* ========================================
+   Cards
+   ======================================== */
+
+.church-card {
+  background: var(--white);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  overflow: hidden;
+  position: relative;
+}
+
+.church-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.church-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(201, 168, 76, 0.4);
+}
+
+.church-card:hover::before {
+  opacity: 1;
+}
+
+.church-card-header {
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-dark) 100%);
+  color: var(--gold);
+  border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0 !important;
+  padding: 1.1rem 1.5rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.church-card-header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(201, 168, 76, 0.06) 100%);
+  pointer-events: none;
+}
+
+.church-card-header i {
+  margin-right: 0.5rem;
+}
+
+.church-card .card-body {
+  padding: 1.5rem;
+}
+
+/* Stained glass card variant */
+.church-card.stained-glass {
+  position: relative;
+}
+
+.church-card.stained-glass::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at bottom right, rgba(201, 168, 76, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+.btn-church-primary {
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-dark) 100%);
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  padding: 0.65rem 1.75rem;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-church-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 168, 76, 0.15),
+    transparent
+  );
+  transition: left 0.6s var(--ease-smooth);
+}
+
+.btn-church-primary:hover {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  color: var(--burgundy-dark);
+  border-color: var(--burgundy);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-church-primary:hover::before {
+  left: 100%;
+}
+
+.btn-church-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-church-outline {
+  background: transparent;
+  color: var(--burgundy);
+  border: 2px solid var(--burgundy);
+  padding: 0.65rem 1.75rem;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  transition: all var(--transition);
+}
+
+.btn-church-outline:hover {
+  background: var(--burgundy);
+  color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-church-outline:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-church-ghost {
+  background: transparent;
+  color: var(--burgundy);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.btn-church-ghost:hover {
+  background: rgba(114, 47, 55, 0.08);
+  color: var(--burgundy-dark);
+}
+
+/* ========================================
+   Badges
+   ======================================== */
+
+.badge-church {
+  background: var(--burgundy);
+  color: var(--gold);
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  transition: all var(--transition);
+  display: inline-block;
+}
+
+.badge-church:hover {
+  background: var(--burgundy-dark);
+  color: var(--gold-light);
+  transform: translateY(-1px);
+}
+
+.badge-church-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  color: var(--burgundy-dark);
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+/* ========================================
+   Forms
+   ======================================== */
+
+.form-control,
+.form-select {
+  border: 2px solid rgba(201, 168, 76, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--dark);
+  background: var(--white);
+  transition: all var(--transition);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: #bbb0a8;
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--burgundy-dark);
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.3px;
+}
+
+/* ========================================
+   Avatars
+   ======================================== */
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--burgundy-dark);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  border: 2px solid var(--burgundy);
+  flex-shrink: 0;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.2);
+}
+
+.avatar-circle-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.8rem;
+}
+
+.avatar-circle-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 1.35rem;
+}
+
+.profile-avatar-large {
+  width: 130px;
+  height: 130px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--burgundy-dark);
+  border: 4px solid var(--burgundy);
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 30px rgba(201, 168, 76, 0.3);
+  transition: all var(--transition);
+}
+
+.profile-avatar-large:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 40px rgba(201, 168, 76, 0.4);
+}
+
+/* ========================================
+   Dividers
+   ======================================== */
+
+.church-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  opacity: 0.5;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.church-divider::before {
+  content: "✝";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--cream);
+  padding: 0 1rem;
+  color: var(--gold);
+  font-size: 0.875rem;
+}
+
+.church-divider-solid {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.3), transparent);
+  margin: 1.5rem 0;
+}
+
+/* ========================================
+   Calendar
+   ======================================== */
+
+.calendar-day {
+  min-height: 90px;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  border-radius: var(--radius-xs);
+  padding: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--white);
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: var(--cream-light);
+  border-color: var(--gold-light);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+  z-index: 1;
+}
+
+.calendar-day.today {
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.12) 0%, rgba(245, 240, 232, 0.8) 100%);
+  border: 2px solid var(--gold);
+  box-shadow: var(--shadow-gold);
+}
+
+.calendar-day.today .day-number {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  color: var(--burgundy-dark);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.calendar-day .day-number {
+  font-weight: 600;
+  color: var(--burgundy);
+  font-size: 0.9rem;
+}
+
+.calendar-day.has-event::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.calendar-day .event-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  margin-right: 2px;
+}
+
+/* ========================================
+   Volunteer Cards
+   ======================================== */
+
+.volunteer-card {
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  transition: all var(--transition);
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.volunteer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.volunteer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.volunteer-card:hover::before {
+  opacity: 1;
+}
+
+/* ========================================
+   Reflection Card
+   ======================================== */
+
+.reflection-card {
+  background: linear-gradient(135deg, var(--cream-light) 0%, var(--cream) 100%);
+  border-left: 4px solid var(--gold);
+  position: relative;
+}
+
+.reflection-card::before {
+  content: "“";
+  position: absolute;
+  top: 0.5rem;
+  right: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 5rem;
+  line-height: 1;
+  color: rgba(201, 168, 76, 0.12);
+  pointer-events: none;
+}
+
+.reflection-card .reflection-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--burgundy-dark);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   Hero / Page Header
+   ======================================== */
+
+.page-header {
+  padding: 2rem 0 1.5rem;
+  position: relative;
+}
+
+.page-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+}
+
+/* ========================================
+   Footer
+   ======================================== */
+
+.church-footer {
+  background: linear-gradient(135deg, var(--burgundy-deeper) 0%, var(--burgundy-dark) 50%, var(--burgundy) 100%);
+  color: var(--cream);
+  position: relative;
+  overflow: hidden;
+}
+
+.church-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+}
+
+.church-footer a {
+  color: var(--gold-light);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.church-footer a:hover {
+  color: var(--gold);
+}
+
+.church-footer .social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(201, 168, 76, 0.3);
+  color: var(--gold-light);
+  transition: all var(--transition);
+  margin: 0 0.25rem;
+}
+
+.church-footer .social-icon:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--burgundy-dark);
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+
+@media (max-width: 575.98px) {
+  .display-4 {
+    font-size: 2rem;
+  }
+
+  .display-5 {
+    font-size: 1.75rem;
+  }
+
+  .church-card-header {
+    padding: 0.9rem 1.1rem;
+    font-size: 1rem;
+  }
+
+  .church-card .card-body {
+    padding: 1.1rem;
+  }
+
+  .btn-church-primary,
+  .btn-church-outline {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
+  }
+
+  .calendar-day {
+    min-height: 60px;
+    padding: 3px;
+    font-size: 0.75rem;
+  }
+
+  .profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    font-size: 2.25rem;
+  }
+
+  .reflection-card::before {
+    font-size: 3.5rem;
+    right: 1rem;
+  }
+
+  .navbar-church .navbar-brand {
+    font-size: 1.3rem;
+  }
+
+  .page-header {
+    padding: 1.25rem 0 1rem;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .display-4 {
+    font-size: 2.5rem;
+  }
+
+  .calendar-day {
+    min-height: 75px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .calendar-day {
+    min-height: 85px;
+  }
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.text-gold {
+  color: var(--gold);
+}
+
+.text-burgundy {
+  color: var(--burgundy);
+}
+
+.text-cream {
+  color: var(--cream);
+}
+
+.bg-gold {
+  background: var(--gold);
+}
+
+.bg-burgundy {
+  background: var(--burgundy);
+}
+
+.bg-cream {
+  background: var(--cream);
+}
+
+.hover-lift {
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Staggered animation container */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeInUp 0.5s var(--ease-smooth) forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* Scroll reveal (triggered via JS) */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s var(--ease-smooth), transform 0.6s var(--ease-smooth);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
