@@ -29,6 +29,11 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore();
 
+  if (userStore.loading) {
+    next();
+    return;
+  }
+
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
     next({ name: "login", query: { redirect: to.fullPath } });
   } else if ((to.name === "login" || to.name === "register") && userStore.isAuthenticated) {

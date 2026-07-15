@@ -13,7 +13,7 @@ const pinia = createPinia();
 app.use(pinia);
 
 const userStore = (await import("./stores/user")).useUserStore();
-await userStore.init();
+userStore.init();
 
 app.use(router);
 app.mount("#app");

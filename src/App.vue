@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+    <LoadingScreen :visible="userStore.loading" />
+
+    <template v-if="!userStore.loading">
     <nav class="navbar navbar-expand-lg navbar-church sticky-top" ref="navbar">
       <div class="container">
         <router-link class="navbar-brand d-flex align-items-center" to="/">
@@ -159,6 +162,7 @@
         </p>
       </div>
     </footer>
+    </template>
   </div>
 </template>
 
@@ -166,6 +170,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "./stores/user";
+import LoadingScreen from "./components/LoadingScreen.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
