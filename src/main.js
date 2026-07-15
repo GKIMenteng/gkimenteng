@@ -8,8 +8,12 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./assets/main.css";
 
 const app = createApp(App);
+const pinia = createPinia();
 
-app.use(createPinia());
+app.use(pinia);
+
+const userStore = (await import("./stores/user")).useUserStore();
+await userStore.init();
+
 app.use(router);
-
 app.mount("#app");

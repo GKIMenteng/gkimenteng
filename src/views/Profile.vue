@@ -15,7 +15,14 @@
           <h4 class="mb-1" style="color: var(--burgundy); font-family: var(--font-heading);">
             {{ userStore.username }}
           </h4>
-          <p class="text-muted mb-3">{{ userStore.email }}</p>
+          <p class="text-muted mb-2">{{ userStore.email }}</p>
+          <span
+            class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3"
+            :style="roleBadgeStyle"
+          >
+            <i :class="roleIcon"></i>
+            {{ roleLabel }}
+          </span>
           <button
             class="btn btn-church-outline w-100"
             @click="showEditForm = !showEditForm"
@@ -183,6 +190,43 @@ const initials = computed(() => {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+});
+
+const roleLabel = computed(() => {
+  const labels = { admin: "Admin", manager: "Manager", guest: "Guest" };
+  return labels[userStore.role] || "Guest";
+});
+
+const roleIcon = computed(() => {
+  const icons = { admin: "bi bi-shield-lock", manager: "bi bi-person-badge", guest: "bi bi-person" };
+  return icons[userStore.role] || "bi bi-person";
+});
+
+const roleBadgeStyle = computed(() => {
+  const styles = {
+    admin: {
+      background: "linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-dark) 100%)",
+      color: "var(--gold)",
+      border: "2px solid var(--gold)",
+      fontSize: "0.85rem",
+      fontWeight: 600,
+    },
+    manager: {
+      background: "linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%)",
+      color: "var(--burgundy-dark)",
+      border: "2px solid var(--burgundy)",
+      fontSize: "0.85rem",
+      fontWeight: 600,
+    },
+    guest: {
+      background: "rgba(201, 168, 76, 0.1)",
+      color: "var(--dark-light)",
+      border: "2px solid rgba(201, 168, 76, 0.3)",
+      fontSize: "0.85rem",
+      fontWeight: 600,
+    },
+  };
+  return styles[userStore.role] || styles.guest;
 });
 
 function saveProfile() {
