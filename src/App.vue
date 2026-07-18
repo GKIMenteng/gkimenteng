@@ -36,6 +36,11 @@
                 </router-link>
               </li>
               <li class="nav-item">
+                <router-link class="nav-link" to="/announcements">
+                  <i class="bi bi-megaphone me-1 d-lg-none"></i>Announcements
+                </router-link>
+              </li>
+              <li class="nav-item">
                 <router-link class="nav-link" to="/calendar">
                   <i class="bi bi-calendar3 me-1 d-lg-none"></i>Calendar
                 </router-link>

@@ -15,25 +15,25 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-export const useNewsStore = defineStore("news", () => {
-  const articles = ref([]);
+export const useAnnouncementsStore = defineStore("announcements", () => {
+  const announcements = ref([]);
   const loading = ref(false);
 
-  async function fetchNews() {
+  async function fetchAnnouncements() {
     loading.value = true;
     try {
-      const q = query(collection(db, "news"), orderBy("startPublishDate", "desc"));
+      const q = query(collection(db, "announcements"), orderBy("startPublishDate", "desc"));
       const snapshot = await getDocs(q);
-      articles.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      announcements.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     } catch {
-      articles.value = [];
+      announcements.value = [];
     } finally {
       loading.value = false;
     }
   }
 
-  async function createNews(data) {
-    await addDoc(collection(db, "news"), {
+  async function createAnnouncement(data) {
+    await addDoc(collection(db, "announcements"), {
       ...data,
       likes: 0,
       likedBy: [],
@@ -42,17 +42,17 @@ export const useNewsStore = defineStore("news", () => {
     });
   }
 
-  async function updateNews(id, data) {
-    await updateDoc(doc(db, "news", id), data);
+  async function updateAnnouncement(id, data) {
+    await updateDoc(doc(db, "announcements", id), data);
   }
 
-  async function deleteNews(id) {
-    await deleteDoc(doc(db, "news", id));
+  async function deleteAnnouncement(id) {
+    await deleteDoc(doc(db, "announcements", id));
   }
 
   async function toggleLike(id, uid, userName) {
-    const ref = doc(db, "news", id);
-    const article = articles.value.find((a) => a.id === id);
+    const ref = doc(db, "announcements", id);
+    const article = announcements.value.find((a) => a.id === id);
     if (!article) return;
     const liked = article.likedBy?.includes(uid);
     if (liked) {
@@ -69,7 +69,7 @@ export const useNewsStore = defineStore("news", () => {
   }
 
   async function addComment(id, uid, userName, text) {
-    const ref = doc(db, "news", id);
+    const ref = doc(db, "announcements", id);
     const comment = {
       id: crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2),
       uid,
@@ -85,16 +85,16 @@ export const useNewsStore = defineStore("news", () => {
 
   async function deleteComment(newsId, commentId, comments) {
     const updated = comments.filter((c) => c.id !== commentId);
-    await updateDoc(doc(db, "news", newsId), { comments: updated });
+    await updateDoc(doc(db, "announcements", newsId), { comments: updated });
   }
 
   return {
-    articles,
+    announcements,
     loading,
-    fetchNews,
-    createNews,
-    updateNews,
-    deleteNews,
+    fetchAnnouncements,
+    createAnnouncement,
+    updateAnnouncement,
+    deleteAnnouncement,
     toggleLike,
     addComment,
     deleteComment,

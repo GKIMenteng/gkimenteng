@@ -100,7 +100,7 @@
                 <h6 class="mb-2" style="color: var(--burgundy)">{{ item.title }}</h6>
                 <p class="mb-2" style="font-size: 0.9rem">{{ item.excerpt }}</p>
                 <router-link
-                  to="/news"
+                  to="/announcements"
                   class="text-decoration-none fw-medium"
                   style="color: var(--gold); font-size: 0.85rem"
                 >
@@ -119,14 +119,14 @@
 <script setup>
 import { onMounted, computed } from "vue";
 import { useEventsStore } from "../stores/events";
-import { useNewsStore } from "../stores/news";
+import { useAnnouncementsStore } from "../stores/announcement";
 
 const eStore = useEventsStore();
-const nStore = useNewsStore();
+const aStore = useAnnouncementsStore();
 
 onMounted(() => {
   eStore.fetchEvents();
-  nStore.fetchNews();
+  aStore.fetchAnnouncements();
 });
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -152,7 +152,7 @@ const upcomingEvents = computed(() => {
 });
 
 const latestNews = computed(() => {
-  return nStore.articles
+  return aStore.announcements
     .filter((a) => {
       const start = a.startPublishDate || a.date;
       if (!start || start > today) return false;

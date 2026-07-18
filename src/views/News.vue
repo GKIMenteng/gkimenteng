@@ -2,176 +2,122 @@
   <div>
     <div class="page-header text-center mb-5 animate-fade-in-up">
       <h1 class="display-4 mb-3" style="color: var(--burgundy)">
-        <i class="bi bi-newspaper me-2"></i>Church News
+        <i class="bi bi-newspaper me-2"></i>Weekly News
       </h1>
       <div class="d-flex justify-content-center gap-3">
         <p class="lead fs-5 mb-0" style="color: var(--dark-light);">
-          Stay updated with the latest from our community
+          Official newsletters, bulletins, and documents from our church
         </p>
         <button
           v-if="userStore.isManager"
           class="btn btn-church-primary btn-sm align-self-center"
-          @click="openCreateModal"
+          @click="openUploadModal"
         >
-          <i class="bi bi-plus-circle me-1"></i>Add News
+          <i class="bi bi-cloud-upload me-1"></i>Upload Document
         </button>
       </div>
     </div>
 
-    <div class="row g-4">
-      <div class="col-lg-8">
-        <div v-if="nStore.loading" class="text-center py-5">
-          <div class="spinner-border" style="color: var(--gold);" role="status"></div>
-        </div>
-        <div
-          v-for="(article, index) in filteredArticles"
-          :key="article.id"
-          class="church-card mb-4 animate-fade-in-up"
-          :class="'animate-stagger-' + (index + 1)"
-        >
-          <div class="card-body">
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-              <span class="badge-church">{{ article.category }}</span>
-              <small class="text-muted">
-                <i class="bi bi-person me-1"></i>{{ article.author }}
-              </small>
-              <small class="text-muted">
-                <i class="bi bi-calendar me-1"></i>{{ article.startPublishDate || article.date }}{{ article.endPublishDate ? ' — ' + article.endPublishDate : '' }}
-              </small>
-              <small class="text-muted">
-                <i class="bi bi-chat me-1"></i>{{ (article.comments || []).length }} comments
-              </small>
-              <div v-if="userStore.isManager" class="ms-auto d-flex gap-1">
-                <button class="btn btn-church-ghost btn-sm py-1" @click="openEditModal(article)" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-church-ghost btn-sm py-1" style="color: var(--burgundy);" @click="openDeleteModal(article)" title="Delete">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-            <h3 class="mb-3" style="color: var(--burgundy); font-family: var(--font-heading);">
-              {{ article.title }}
-            </h3>
-            <p class="mb-0" style="line-height: 1.8; white-space: pre-line;">{{ article.content }}</p>
-            <hr class="church-divider-solid" />
-            <div class="d-flex gap-2 align-items-center">
-              <button class="btn btn-church-ghost" :class="{ liked: article.likedBy?.includes(userStore.uid) }" @click="handleLike(article)">
-                <i class="bi" :class="article.likedBy?.includes(userStore.uid) ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up'"></i>
-                Like ({{ article.likes || 0 }})
-              </button>
-              <button class="btn btn-church-ghost" @click="handleShare(article)">
-                <i class="bi bi-share me-1"></i>Share
-              </button>
-              <button class="btn btn-church-ghost ms-auto" @click="toggleComments(article.id)">
-                <i class="bi bi-chat-dots me-1"></i>{{ showCommentsId === article.id ? 'Hide' : '' }} Comments ({{ (article.comments || []).length }})
-              </button>
-            </div>
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border" style="color: var(--gold);" role="status"></div>
+      <p class="mt-3" style="color: var(--dark-light);">Loading documents...</p>
+    </div>
 
-            <div v-if="showCommentsId === article.id" class="mt-3 pt-3 border-top">
-              <div v-if="(article.comments || []).length === 0" class="text-muted small mb-3">
-                No comments yet. Be the first to comment!
-              </div>
-              <div v-else class="d-flex flex-column gap-2 mb-3">
-                <div v-for="c in article.comments" :key="c.id" class="d-flex align-items-start gap-2">
-                  <div
-                    class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
-                    style="width: 32px; height: 32px; background: var(--gold-light); color: var(--burgundy); font-size: 0.75rem; font-weight: 600;"
-                  >
-                    {{ c.userName?.charAt(0)?.toUpperCase() || '?' }}
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-items-center gap-2">
-                      <strong style="font-size: 0.85rem;">{{ c.userName }}</strong>
-                      <small class="text-muted" style="font-size: 0.7rem;">{{ formatCommentTime(c.createdAt) }}</small>
-                      <button
-                        v-if="c.uid === userStore.uid || userStore.isManager"
-                        class="btn btn-sm p-0 ms-auto"
-                        style="color: var(--burgundy); font-size: 0.7rem;"
-                        @click="handleDeleteComment(article, c.id)"
-                        title="Delete comment"
-                      >
-                        <i class="bi bi-x-circle"></i>
-                      </button>
-                    </div>
-                    <p class="mb-0" style="font-size: 0.85rem;">{{ c.text }}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="d-flex gap-2">
-                <input
-                  v-model="commentText"
-                  class="form-control form-control-sm"
-                  style="font-size: 0.85rem;"
-                  placeholder="Write a comment..."
-                  @keyup.enter="handleAddComment(article)"
-                  maxlength="500"
-                />
-                <button class="btn btn-church-primary btn-sm flex-shrink-0" @click="handleAddComment(article)" :disabled="!commentText.trim()">
-                  <i class="bi bi-send me-1"></i>Send
-                </button>
-              </div>
-            </div>
-          </div>
+    <!-- Empty State -->
+    <div v-else-if="documents.length === 0" class="text-center py-5 animate-fade-in-up">
+      <div class="church-card d-inline-block p-5" style="max-width: 480px;">
+        <div class="mb-4">
+          <i class="bi bi-file-earmark-pdf" style="font-size: 3rem; color: var(--burgundy); opacity: 0.4;"></i>
         </div>
+        <h5 style="color: var(--burgundy); font-family: var(--font-heading);">No Documents Yet</h5>
+        <p class="text-muted mb-4" style="font-size: 0.9rem;">
+          Church newsletters, bulletins, and official documents will appear here once uploaded.
+        </p>
+        <button v-if="userStore.isManager" class="btn btn-church-primary" @click="openUploadModal">
+          <i class="bi bi-cloud-upload me-1"></i>Upload First Document
+        </button>
       </div>
+    </div>
 
-      <div class="col-lg-4">
-        <div class="church-card mb-4 animate-fade-in-up animate-stagger-4">
-          <div class="church-card-header d-flex align-items-center">
-            <i class="bi bi-tags me-2"></i>Categories
-          </div>
-          <div class="card-body">
-            <div class="d-flex flex-wrap gap-2">
-              <span
-                class="badge-church cursor-pointer"
-                :class="{ 'badge-active': selectedCategory === cat }"
-                v-for="cat in categories"
-                :key="cat"
-                @click="selectedCategory = selectedCategory === cat ? '' : cat"
-              >
-                {{ cat }}
+    <!-- Document Grid -->
+    <div v-else class="row g-4 stagger-children">
+      <div
+        v-for="(doc, index) in documents"
+        :key="doc.id"
+        class="col-12 col-sm-6 col-lg-4"
+      >
+        <div class="church-card document-card h-100" :class="'animate-stagger-' + (index + 1)">
+          <div class="card-body d-flex flex-column">
+            <div class="document-icon-wrapper mb-3">
+              <div class="document-icon">
+                <i class="bi bi-filetype-pdf"></i>
+              </div>
+            </div>
+
+            <h6 class="document-title mb-2">{{ doc.title }}</h6>
+
+            <div class="document-meta mb-3">
+              <span class="meta-item">
+                <i class="bi bi-calendar3 me-1"></i>{{ doc.date }}
+              </span>
+              <span v-if="doc.size" class="meta-item">
+                <i class="bi bi-file-earmark me-1"></i>{{ doc.size }}
               </span>
             </div>
-          </div>
-        </div>
 
-        <div class="church-card animate-fade-in-up animate-stagger-5">
-          <div class="church-card-header d-flex align-items-center">
-            <i class="bi bi-calendar me-2"></i>Recent Posts
-          </div>
-          <div class="card-body">
-            <div v-for="(post, index) in recentPosts" :key="post.id">
-              <div>
-                <h6 class="mb-1" style="color: var(--burgundy);">{{ post.title }}</h6>
-                <small class="text-muted">{{ post.startPublishDate || post.date }}{{ post.endPublishDate ? ' — ' + post.endPublishDate : '' }}</small>
-              </div>
-              <hr v-if="index < recentPosts.length - 1" class="church-divider-solid" />
+            <div class="mt-auto d-flex gap-2">
+              <a
+                :href="doc.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-church-primary btn-sm flex-grow-1"
+              >
+                <i class="bi bi-eye me-1"></i>View
+              </a>
+              <a
+                :href="doc.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-church-outline btn-sm flex-grow-1"
+                :download="doc.name"
+              >
+                <i class="bi bi-download me-1"></i>Download
+              </a>
+              <button
+                v-if="userStore.isManager"
+                class="btn btn-church-ghost btn-sm px-2"
+                style="color: var(--burgundy);"
+                @click="confirmDelete(doc)"
+                title="Delete document"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Create / Edit Modal -->
+    <!-- Upload Modal -->
     <Transition name="popup">
       <div class="modal-overlay" v-if="showModal" @click.self="showModal = false">
-        <div class="church-card modal-card modal-card-lg">
+        <div class="church-card modal-card modal-card-md">
           <div class="modal-header-custom">
             <div class="d-flex align-items-center gap-3">
               <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold-light) 0%, var(--cream) 100%);">
-                <i class="bi" :class="editing ? 'bi-pencil-square' : 'bi-plus-lg'" style="color: var(--burgundy); font-size: 1.25rem;"></i>
+                <i class="bi bi-cloud-upload" style="color: var(--burgundy); font-size: 1.25rem;"></i>
               </div>
               <div>
                 <h5 class="mb-0" style="color: var(--burgundy); font-family: var(--font-heading);">
-                  {{ editing ? 'Edit Article' : 'New Article' }}
+                  Upload Document
                 </h5>
                 <p class="mb-0" style="font-size: 0.75rem; color: var(--dark-light);">
-                  {{ editing ? 'Update the news article details below' : 'Fill in the details to publish a new news article' }}
+                  Upload a PDF newsletter, bulletin, or official document
                 </p>
               </div>
             </div>
-            <button class="modal-close-btn" @click="showModal = false" type="button" aria-label="Close">
+            <button class="modal-close-btn" @click="showModal = false" type="button">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -182,140 +128,74 @@
               <span>{{ formError }}</span>
             </div>
 
-            <div class="row g-4">
-              <div class="col-12 col-lg-8 d-flex flex-column gap-4">
-                <section class="form-section">
-                  <div class="form-section-header">
-                    <i class="bi bi-type"></i>
-                    <span>Article Content</span>
+            <!-- File Drop Zone -->
+            <div
+              class="drop-zone mb-4"
+              :class="{ 'drop-zone-active': dragging, 'drop-zone-has-file': selectedFile }"
+              @dragenter.prevent="dragging = true"
+              @dragover.prevent="dragging = true"
+              @dragleave.prevent="dragging = false"
+              @drop.prevent="handleDrop"
+              @click="fileInput?.click()"
+            >
+              <input
+                ref="fileInput"
+                type="file"
+                accept=".pdf,application/pdf"
+                class="d-none"
+                @change="handleFileSelect"
+              />
+              <template v-if="!selectedFile">
+                <div class="drop-zone-icon">
+                  <i class="bi bi-cloud-arrow-up"></i>
+                </div>
+                <p class="drop-zone-text mb-1">
+                  <strong>Click to upload</strong> or drag and drop
+                </p>
+                <p class="drop-zone-hint mb-0">PDF files only, max 20 MB</p>
+              </template>
+              <template v-else>
+                <div class="file-preview d-flex align-items-center gap-3">
+                  <div class="file-preview-icon">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
                   </div>
-                  <div class="form-section-body">
-                    <div class="form-floating mb-3">
-                      <input
-                        v-model="form.title"
-                        id="newsTitle"
-                        class="form-control church-input form-title-input"
-                        placeholder="Enter article title"
-                        maxlength="200"
-                        @input="formError = ''"
-                      />
-                      <label for="newsTitle">Article Title</label>
-                      <div class="input-character-count">
-                        <span :class="{ 'text-danger': form.title.length > 180 }">{{ form.title.length }}</span> / 200
-                      </div>
-                    </div>
+                  <div class="flex-grow-1 text-start">
+                    <p class="file-preview-name mb-0">{{ selectedFile.name }}</p>
+                    <p class="file-preview-size mb-0">{{ formatSize(selectedFile.size) }}</p>
+                  </div>
+                  <button class="btn btn-sm file-remove-btn" @click.stop="removeFile" title="Remove file">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </template>
+            </div>
 
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                      <label class="form-label small fw-semibold mb-0">Content</label>
-                      <span class="input-character-count">
-                        <span :class="{ 'text-danger': form.content.length > 5000 }">{{ form.content.length }}</span> / 5000
-                      </span>
-                    </div>
-                    <div class="content-editor-wrapper">
-                      <div class="content-editor-toolbar">
-                        <span class="toolbar-label">Write your news story</span>
-                        <div class="d-flex gap-1">
-                          <button type="button" class="btn btn-sm toolbar-btn" title="Preview" @click="showPreview = !showPreview">
-                            <i class="bi" :class="showPreview ? 'bi-pencil' : 'bi-eye'"></i>
-                          </button>
-                        </div>
-                      </div>
-                      <textarea
-                        v-if="!showPreview"
-                        v-model="form.content"
-                        class="form-control church-input content-textarea"
-                        placeholder="Write your news content here..."
-                        rows="12"
-                        @input="formError = ''"
-                      ></textarea>
-                      <div v-else class="content-preview">
-                        <h4 class="preview-title">{{ form.title || 'Untitled Article' }}</h4>
-                        <hr class="church-divider-solid" />
-                        <div class="preview-body">{{ form.content || 'No content to preview.' }}</div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
+            <!-- Title -->
+            <div class="form-floating mb-3">
+              <input
+                v-model="docTitle"
+                id="docTitle"
+                class="form-control church-input"
+                placeholder="Document title"
+                maxlength="200"
+                @input="formError = ''"
+              />
+              <label for="docTitle">Document Title</label>
+            </div>
 
-              <div class="col-12 col-lg-4 d-flex flex-column gap-4">
-                <section class="form-section">
-                  <div class="form-section-header">
-                    <i class="bi bi-gear"></i>
-                    <span>Publishing Details</span>
-                  </div>
-                  <div class="form-section-body">
-                    <div class="mb-3">
-                      <label class="form-label small fw-semibold">Category</label>
-                      <div class="d-flex flex-wrap gap-1">
-                        <span
-                          v-for="cat in categories"
-                          :key="cat"
-                          class="category-chip"
-                          :class="{ active: form.category === cat }"
-                          @click="form.category = cat; formError = ''"
-                        >
-                          {{ cat }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label small fw-semibold">Author</label>
-                      <div class="form-floating">
-                        <input
-                          v-model="form.author"
-                          id="newsAuthor"
-                          class="form-control church-input"
-                          placeholder="Author name"
-                          @input="formError = ''"
-                        />
-                        <label for="newsAuthor">Author Name</label>
-                      </div>
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label small fw-semibold">Start Publish Date</label>
-                      <div class="form-floating">
-                        <input
-                          v-model="form.startPublishDate"
-                          id="newsStartDate"
-                          type="date"
-                          class="form-control church-input"
-                          @input="formError = ''"
-                        />
-                        <label for="newsStartDate">Start Publish Date</label>
-                      </div>
-                    </div>
-                    <div class="mb-0">
-                      <label class="form-label small fw-semibold">End Publish Date</label>
-                      <div class="form-floating">
-                        <input
-                          v-model="form.endPublishDate"
-                          id="newsEndDate"
-                          type="date"
-                          class="form-control church-input"
-                          @input="formError = ''"
-                        />
-                        <label for="newsEndDate">End Publish Date (optional)</label>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section class="form-section">
-                  <div class="form-section-header">
-                    <i class="bi bi-info-circle"></i>
-                    <span>Quick Tips</span>
-                  </div>
-                  <div class="form-section-body" style="font-size: 0.8rem; color: var(--dark-light);">
-                    <ul class="list-unstyled mb-0 d-flex flex-column gap-1">
-                      <li><i class="bi bi-check2 text-success me-1"></i> Use a clear, descriptive title</li>
-                      <li><i class="bi bi-check2 text-success me-1"></i> Select the most relevant category</li>
-                      <li><i class="bi bi-check2 text-success me-1"></i> Keep paragraphs short and scannable</li>
-                    </ul>
-                  </div>
-                </section>
+            <!-- Category -->
+            <div class="mb-0">
+              <label class="form-label small fw-semibold">Category</label>
+              <div class="d-flex flex-wrap gap-1">
+                <span
+                  v-for="cat in categories"
+                  :key="cat"
+                  class="category-chip"
+                  :class="{ active: docCategory === cat }"
+                  @click="docCategory = cat; formError = ''"
+                >
+                  {{ cat }}
+                </span>
               </div>
             </div>
           </div>
@@ -324,13 +204,28 @@
             <button class="btn btn-church-ghost" @click="showModal = false">
               <i class="bi bi-x me-1"></i>Cancel
             </button>
-            <button class="btn btn-church-primary" @click="handleSave" :disabled="saving || !formValid">
-              <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+            <button class="btn btn-church-primary" @click="handleUpload" :disabled="uploading || !canUpload">
+              <span v-if="uploading" class="spinner-border spinner-border-sm me-1"></span>
               <template v-else>
-                <i class="bi" :class="editing ? 'bi-check-lg' : 'bi-megaphone'"></i>
+                <i class="bi bi-cloud-upload me-1"></i>
               </template>
-              {{ editing ? 'Update Article' : 'Publish Article' }}
+              {{ uploading ? 'Uploading...' : 'Upload Document' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Upload Progress Toast -->
+    <Transition name="popup">
+      <div v-if="showProgress" class="progress-toast">
+        <div class="progress-toast-card">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="spinner-border spinner-border-sm" style="color: var(--burgundy);"></div>
+            <span style="font-size: 0.9rem; font-weight: 500; color: var(--burgundy);">Uploading to Google Drive...</span>
+          </div>
+          <div class="progress" style="height: 4px;">
+            <div class="progress-bar" style="width: 100%; background: linear-gradient(90deg, var(--gold), var(--burgundy));"></div>
           </div>
         </div>
       </div>
@@ -344,11 +239,16 @@
             <div class="mb-3">
               <i class="bi bi-exclamation-triangle fs-1" style="color: var(--burgundy);"></i>
             </div>
-            <h5 style="color: var(--burgundy); font-family: var(--font-heading);">Delete News</h5>
-            <p class="text-muted mb-4">Are you sure you want to delete this news article?</p>
+            <h5 style="color: var(--burgundy); font-family: var(--font-heading);">Delete Document</h5>
+            <p class="text-muted mb-1">Are you sure you want to delete</p>
+            <p class="fw-semibold mb-4" style="color: var(--burgundy); font-size: 0.9rem;">{{ deletingDoc?.title }}</p>
             <div class="d-flex justify-content-center gap-2">
               <button class="btn btn-church-ghost" @click="showDeleteModal = false">Cancel</button>
-              <button class="btn btn-church-primary" style="background: var(--burgundy); border-color: var(--burgundy);" @click="handleDelete">Delete</button>
+              <button class="btn btn-church-primary" style="background: var(--burgundy); border-color: var(--burgundy);" @click="handleDelete" :disabled="deleting">
+                <span v-if="deleting" class="spinner-border spinner-border-sm me-1"></span>
+                <template v-else><i class="bi bi-trash me-1"></i></template>
+                Delete
+              </button>
             </div>
           </div>
         </div>
@@ -360,191 +260,335 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useUserStore } from "../stores/user";
-import { useNewsStore } from "../stores/news";
+import { getPDFs, uploadFile, deleteFile } from "../services/googleDrive";
 
 const userStore = useUserStore();
-const nStore = useNewsStore();
 
-const categories = [
-  "Announcement", "Missions", "Community", "Youth", "Worship", "Anniversary", "Outreach", "General",
-];
-
-const selectedCategory = ref("");
-const showCommentsId = ref(null);
-const commentText = ref("");
-const showPreview = ref(false);
-
+const documents = ref([]);
+const loading = ref(true);
 const showModal = ref(false);
 const showDeleteModal = ref(false);
-const editing = ref(false);
-const editingId = ref(null);
-const saving = ref(false);
+const showProgress = ref(false);
+const deletingDoc = ref(null);
+const deleting = ref(false);
+const uploading = ref(false);
 const formError = ref("");
+const selectedFile = ref(null);
+const docTitle = ref("");
+const docCategory = ref("");
+const dragging = ref(false);
+const fileInput = ref(null);
 
-const formValid = computed(() =>
-  form.value.title.trim() && form.value.content.trim() && form.value.category && form.value.author && form.value.startPublishDate
+const categories = [
+  "Newsletter", "Bulletin", "Annual Report", "Minutes", "Form", "Letter", "Other",
+];
+
+const canUpload = computed(() =>
+  selectedFile.value && docTitle.value.trim() && docCategory.value
 );
 
-const form = ref({
-  title: "",
-  content: "",
-  category: "",
-  author: "",
-  startPublishDate: "",
-  endPublishDate: "",
-});
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-const filteredArticles = computed(() => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().slice(0, 10);
-
-  return nStore.articles.filter((a) => {
-    const start = a.startPublishDate || a.date;
-    if (!start) return true;
-    if (start > todayStr) return false;
-    const end = a.endPublishDate;
-    if (end && end < todayStr) return false;
-    if (selectedCategory.value && a.category !== selectedCategory.value) return false;
-    return true;
-  });
-});
-
-const recentPosts = computed(() =>
-  nStore.articles.slice(0, 5).map((a) => ({ id: a.id, title: a.title, date: a.startPublishDate || a.date, startPublishDate: a.startPublishDate, endPublishDate: a.endPublishDate }))
-);
-
-function emptyForm() {
-  form.value = { title: "", content: "", category: "", author: "", startPublishDate: "", endPublishDate: "" };
-  formError.value = "";
+function formatSize(bytes) {
+  if (!bytes) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(1) + " MB";
 }
 
-function openCreateModal() {
-  editing.value = false;
-  editingId.value = null;
-  showPreview.value = false;
-  emptyForm();
-  form.value.author = userStore.displayName || userStore.email || "";
-  const d = new Date();
-  form.value.startPublishDate = d.toISOString().slice(0, 10);
-  showModal.value = true;
-}
-
-function openEditModal(article) {
-  editing.value = true;
-  editingId.value = article.id;
-  showPreview.value = false;
-  form.value = {
-    title: article.title || "",
-    content: article.content || "",
-    category: article.category || "",
-    author: article.author || "",
-    startPublishDate: article.startPublishDate || article.date || "",
-    endPublishDate: article.endPublishDate || "",
-  };
+function openUploadModal() {
+  selectedFile.value = null;
+  docTitle.value = "";
+  docCategory.value = "";
   formError.value = "";
   showModal.value = true;
 }
 
-function openDeleteModal(article) {
-  editingId.value = article.id;
+function handleFileSelect(e) {
+  const file = e.target.files?.[0];
+  validateAndSetFile(file);
+}
+
+function handleDrop(e) {
+  dragging.value = false;
+  const file = e.dataTransfer?.files?.[0];
+  validateAndSetFile(file);
+}
+
+function validateAndSetFile(file) {
+  if (!file) return;
+  if (file.type !== "application/pdf") {
+    formError.value = "Only PDF files are accepted.";
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    formError.value = "File is too large. Maximum size is 20 MB.";
+    return;
+  }
+  selectedFile.value = file;
+  if (!docTitle.value) {
+    docTitle.value = file.name.replace(/\.pdf$/i, "").replace(/[_-]/g, " ");
+  }
+  formError.value = "";
+}
+
+function removeFile() {
+  selectedFile.value = null;
+  if (fileInput.value) fileInput.value.value = "";
+}
+
+async function handleUpload() {
+  if (!canUpload.value) {
+    formError.value = "Please select a file, enter a title, and choose a category.";
+    return;
+  }
+  uploading.value = true;
+  showProgress.value = true;
+  try {
+    await uploadFile(selectedFile.value, {
+      title: docTitle.value.trim(),
+      folderId: import.meta.env.VITE_GOOGLE_DRIVE_WARTA_FOLDER_ID || "",
+    });
+    showModal.value = false;
+    showProgress.value = false;
+    await fetchDocuments();
+  } catch (err) {
+    formError.value = err.message || "Upload failed. Please try again.";
+    showProgress.value = false;
+  } finally {
+    uploading.value = false;
+  }
+}
+
+function confirmDelete(doc) {
+  deletingDoc.value = doc;
   showDeleteModal.value = true;
 }
 
-async function handleSave() {
-  if (!form.value.title.trim() || !form.value.content.trim() || !form.value.category || !form.value.author || !form.value.startPublishDate) {
-    formError.value = "Title, content, category, author, and start publish date are required.";
-    return;
-  }
-  saving.value = true;
-  const payload = { ...form.value };
-  if (!payload.endPublishDate) delete payload.endPublishDate;
-  try {
-    if (editing.value && editingId.value) {
-      await nStore.updateNews(editingId.value, payload);
-    } else {
-      await nStore.createNews(payload);
-    }
-    showModal.value = false;
-    await nStore.fetchNews();
-  } catch {
-    formError.value = "Failed to save news. Please try again.";
-  } finally {
-    saving.value = false;
-  }
-}
-
 async function handleDelete() {
-  if (!editingId.value) return;
+  if (!deletingDoc.value) return;
+  deleting.value = true;
   try {
-    await nStore.deleteNews(editingId.value);
+    await deleteFile(deletingDoc.value.id);
     showDeleteModal.value = false;
-    await nStore.fetchNews();
-  } catch {
-    formError.value = "Failed to delete news.";
+    deletingDoc.value = null;
+    await fetchDocuments();
+  } catch (err) {
+    formError.value = err.message || "Failed to delete document.";
+  } finally {
+    deleting.value = false;
   }
 }
 
-async function handleLike(article) {
-  if (!userStore.uid) return;
-  await nStore.toggleLike(article.id, userStore.uid, userStore.displayName || "Anonymous");
-  await nStore.fetchNews();
-}
-
-async function handleAddComment(article) {
-  if (!commentText.value.trim() || !userStore.uid) return;
-  await nStore.addComment(article.id, userStore.uid, userStore.displayName || userStore.email || "Anonymous", commentText.value.trim());
-  commentText.value = "";
-  await nStore.fetchNews();
-}
-
-async function handleDeleteComment(article, commentId) {
-  if (!article.comments) return;
-  await nStore.deleteComment(article.id, commentId, article.comments);
-  await nStore.fetchNews();
-}
-
-function toggleComments(articleId) {
-  showCommentsId.value = showCommentsId.value === articleId ? null : articleId;
-}
-
-function handleShare(article) {
-  const url = window.location.origin + "/news#" + article.id;
-  if (navigator.share) {
-    navigator.share({ title: article.title, text: article.content.slice(0, 100), url }).catch(() => {});
-  } else {
-    navigator.clipboard.writeText(url).then(() => alert("Link copied to clipboard!")).catch(() => {});
+async function fetchDocuments() {
+  loading.value = true;
+  try {
+    documents.value = await getPDFs();
+  } catch (err) {
+    console.warn("Failed to fetch PDFs:", err.message);
+    documents.value = [];
+  } finally {
+    loading.value = false;
   }
-}
-
-function formatCommentTime(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return Math.floor(diff / 60) + "m ago";
-  if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
-  return d.toLocaleDateString();
 }
 
 onMounted(() => {
-  nStore.fetchNews();
+  fetchDocuments();
 });
 </script>
 
 <style scoped>
-.badge-active {
-  background: var(--burgundy) !important;
-  color: #fff !important;
+/* Document Card */
+.document-card {
+  transition: transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
 }
 
-.liked {
-  color: var(--burgundy) !important;
+.document-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
-.liked i {
-  color: var(--burgundy) !important;
+.document-icon-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.document-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.12) 0%, rgba(201, 168, 76, 0.06) 100%);
+  border-radius: 16px;
+  border: 2px solid rgba(201, 168, 76, 0.2);
+  font-size: 1.75rem;
+  color: var(--burgundy);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.document-card:hover .document-icon {
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-dark) 100%);
+  border-color: var(--burgundy);
+  color: var(--gold);
+  transform: scale(1.05);
+}
+
+.document-title {
+  color: var(--burgundy);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.document-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--dark-light);
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Drop Zone */
+.drop-zone {
+  border: 2px dashed rgba(201, 168, 76, 0.35);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-smooth);
+  background: var(--cream);
+}
+
+.drop-zone:hover {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+.drop-zone-active {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+  transform: scale(1.01);
+}
+
+.drop-zone-has-file {
+  border-style: solid;
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.06);
+}
+
+.drop-zone-icon {
+  font-size: 2.5rem;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+
+.drop-zone-text {
+  font-size: 0.9rem;
+  color: var(--dark-light);
+}
+
+.drop-zone-hint {
+  font-size: 0.78rem;
+  color: var(--dark-light);
+  opacity: 0.7;
+}
+
+/* File Preview */
+.file-preview {
+  text-align: left;
+}
+
+.file-preview-icon {
+  font-size: 2rem;
+  color: var(--burgundy);
+}
+
+.file-preview-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--dark);
+  word-break: break-all;
+}
+
+.file-preview-size {
+  font-size: 0.75rem;
+  color: var(--dark-light);
+}
+
+.file-remove-btn {
+  color: var(--burgundy);
+  background: rgba(128, 55, 55, 0.08);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.file-remove-btn:hover {
+  background: var(--burgundy);
+  color: #fff;
+}
+
+/* Progress Toast */
+.progress-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1060;
+  max-width: 360px;
+  width: calc(100% - 2rem);
+}
+
+.progress-toast-card {
+  background: var(--white);
+  border: 2px solid rgba(201, 168, 76, 0.3);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Category Chips */
+.category-chip {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  border-radius: 100px;
+  background: #fff;
+  color: var(--dark-light);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.category-chip:hover {
+  border-color: var(--gold);
+  color: var(--burgundy);
+}
+
+.category-chip.active {
+  background: var(--burgundy);
+  color: #fff;
+  border-color: var(--burgundy);
+}
+
+/* Modal */
+.modal-card-md {
+  max-width: 520px;
 }
 
 /* =============================================
@@ -578,10 +622,6 @@ onMounted(() => {
   max-width: 400px;
 }
 
-.modal-card-lg {
-  max-width: 820px;
-}
-
 .modal-header-custom {
   display: flex;
   align-items: center;
@@ -612,7 +652,6 @@ onMounted(() => {
   color: var(--burgundy);
 }
 
-/* ---------- Modal Layout ---------- */
 .modal-body-custom {
   padding: 1.5rem 1.75rem;
   max-height: 70vh;
@@ -661,165 +700,9 @@ onMounted(() => {
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ---------- Form Sections ---------- */
-.form-section {
-  background: var(--cream);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.form-section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  background: rgba(128, 55, 55, 0.04);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--burgundy);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.form-section-header i {
-  font-size: 0.85rem;
-}
-
-.form-section-body {
-  padding: 1rem;
-}
-
-/* ---------- Title Input ---------- */
-.form-title-input {
-  font-size: 1.1rem !important;
-  font-weight: 600;
-  padding-top: 1.25rem !important;
-  padding-bottom: 0.5rem !important;
-  border: none;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
-  border-radius: 0;
-  background: transparent;
-  transition: border-color 0.2s;
-}
-
-.form-title-input:focus {
-  border-bottom-color: var(--gold);
-  box-shadow: none;
-}
-
-.form-title-input::placeholder {
-  color: #bbb;
-  font-weight: 400;
-}
-
-.form-floating > .form-title-input ~ label {
-  padding-left: 0.75rem;
-}
-
-/* ---------- Character Count ---------- */
-.input-character-count {
-  font-size: 0.7rem;
-  color: var(--dark-light);
-  text-align: right;
-}
-
-/* ---------- Content Editor ---------- */
-.content-editor-wrapper {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background: #fff;
-}
-
-.content-editor-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 0.75rem;
-  background: var(--cream);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.toolbar-label {
-  font-size: 0.75rem;
-  color: var(--dark-light);
-  font-weight: 500;
-}
-
-.toolbar-btn {
-  color: var(--dark-light);
-  padding: 0.15rem 0.4rem;
-  font-size: 0.8rem;
-  border-radius: 0.3rem;
-  transition: all 0.15s;
-}
-
-.toolbar-btn:hover {
-  color: var(--burgundy);
-  background: rgba(128, 55, 55, 0.06);
-}
-
-.content-textarea {
-  border: none !important;
-  border-radius: 0 !important;
-  resize: vertical;
-  min-height: 220px;
-  font-size: 0.92rem;
-  line-height: 1.7;
-  padding: 0.85rem 0.85rem;
-}
-
-.content-textarea:focus {
-  box-shadow: none;
-}
-
-/* ---------- Content Preview ---------- */
-.content-preview {
-  padding: 1.25rem;
-  min-height: 220px;
-}
-
-.preview-title {
-  color: var(--burgundy);
-  font-family: var(--font-heading);
-  font-size: 1.25rem;
-}
-
-.preview-body {
-  font-size: 0.92rem;
-  line-height: 1.7;
-  color: #444;
-  white-space: pre-line;
-}
-
-/* ---------- Category Chips ---------- */
-.category-chip {
-  display: inline-block;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.78rem;
-  border-radius: 100px;
-  background: #fff;
-  color: var(--dark-light);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: all 0.15s;
-  user-select: none;
-}
-
-.category-chip:hover {
-  border-color: var(--gold);
-  color: var(--burgundy);
-}
-
-.category-chip.active {
-  background: var(--burgundy);
-  color: #fff;
-  border-color: var(--burgundy);
-}
-
-/* ---------- Floating Label Fix ---------- */
+/* =============================================
+   Floating Label
+   ============================================= */
 .form-floating > .form-control:focus ~ label,
 .form-floating > .form-control:not(:placeholder-shown) ~ label {
   opacity: 0.75;
@@ -831,7 +714,9 @@ onMounted(() => {
   box-shadow: 0 0 0 0.15rem rgba(212, 175, 55, 0.15);
 }
 
-/* ---------- Scrollbar Styling ---------- */
+/* =============================================
+   Scrollbar
+   ============================================= */
 .modal-body-custom::-webkit-scrollbar {
   width: 5px;
 }
@@ -847,5 +732,24 @@ onMounted(() => {
 
 .modal-body-custom::-webkit-scrollbar-thumb:hover {
   background: rgba(128, 55, 55, 0.35);
+}
+
+/* =============================================
+   Responsive
+   ============================================= */
+@media (max-width: 575.98px) {
+  .document-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 1.4rem;
+  }
+
+  .drop-zone {
+    padding: 1.5rem 1rem;
+  }
+
+  .drop-zone-icon {
+    font-size: 2rem;
+  }
 }
 </style>
