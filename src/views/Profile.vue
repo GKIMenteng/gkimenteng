@@ -45,15 +45,15 @@
           </h5>
           <div class="mb-2 pb-2" style="border-bottom: 1px solid rgba(201, 168, 76, 0.15);">
             <small class="text-muted d-block">Member Since</small>
-            <span>January 2020</span>
+            <span>{{ formattedMemberSince }}</span>
           </div>
           <div class="mb-2 pb-2" style="border-bottom: 1px solid rgba(201, 168, 76, 0.15);">
             <small class="text-muted d-block">Baptism Date</small>
-            <span>March 15, 2015</span>
+            <span>{{ userStore.baptismDate || '—' }}</span>
           </div>
           <div>
             <small class="text-muted d-block">Small Group</small>
-            <span>Tuesday Evening Group</span>
+            <span>{{ userStore.smallGroup || '—' }}</span>
           </div>
         </div>
       </div>
@@ -73,7 +73,7 @@
               <label class="form-label">Email</label>
               <input type="email" class="form-control" v-model="editEmail" />
             </div>
-            <div class="mb-4">
+            <div class="mb-3">
               <label class="form-label">Avatar URL (optional)</label>
               <input
                 type="text"
@@ -81,6 +81,20 @@
                 v-model="editAvatar"
                 placeholder="https://example.com/avatar.jpg"
               />
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-sm-6">
+                <label class="form-label">Baptism Date</label>
+                <input type="date" class="form-control" v-model="editBaptismDate" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Small Group</label>
+                <input type="text" class="form-control" v-model="editSmallGroup" placeholder="e.g. Tuesday Evening Group" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Ministry Involved</label>
+                <input type="text" class="form-control" v-model="editMinistry" placeholder="e.g. Worship Team, Greeting Ministry" />
+              </div>
             </div>
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-church-primary">
@@ -110,60 +124,46 @@
             <div class="col-sm-6">
               <div class="p-3 rounded-3" style="background: var(--cream-light);">
                 <small class="text-muted d-block">Small Group</small>
-                <span class="fw-medium" style="color: var(--burgundy);">Tuesday Evening Group</span>
+                <span class="fw-medium" style="color: var(--burgundy);">{{ userStore.smallGroup || '—' }}</span>
               </div>
             </div>
             <div class="col-sm-6">
               <div class="p-3 rounded-3" style="background: var(--cream-light);">
                 <small class="text-muted d-block">Ministry Involved</small>
-                <span class="fw-medium" style="color: var(--burgundy);">Worship Team, Greeting Ministry</span>
+                <span class="fw-medium" style="color: var(--burgundy);">{{ userStore.ministry || '—' }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- My Activity -->
+        <!-- Account Overview -->
         <div class="church-card p-4 p-lg-5 mt-4 animate-fade-in-up animate-stagger-4">
           <h4 class="mb-4" style="color: var(--burgundy); font-family: var(--font-heading);">
-            <i class="bi bi-activity me-2" style="color: var(--gold);"></i>My Activity
+            <i class="bi bi-shield-check me-2" style="color: var(--gold);"></i>Account Overview
           </h4>
           <div class="row g-4">
             <div class="col-md-6">
               <div class="p-3 rounded-3" style="background: rgba(201, 168, 76, 0.08); border: 1px solid rgba(201, 168, 76, 0.15);">
                 <h6 class="mb-3 d-flex align-items-center" style="color: var(--burgundy);">
-                  <i class="bi bi-calendar-check me-2" style="color: var(--gold);"></i>Upcoming Events
+                  <i class="bi bi-person-badge me-2" style="color: var(--gold);"></i>Account Type
                 </h6>
-                <ul class="list-unstyled mb-0" style="font-size: 0.9rem;">
-                  <li class="mb-2 d-flex align-items-center">
-                    <span class="event-dot me-2"></span>
-                    Sunday Service - July 21, 2024
-                  </li>
-                  <li class="mb-2 d-flex align-items-center">
-                    <span class="event-dot me-2"></span>
-                    Bible Study - July 24, 2024
-                  </li>
-                  <li class="d-flex align-items-center">
-                    <span class="event-dot me-2"></span>
-                    Volunteer Training - July 27, 2024
-                  </li>
-                </ul>
+                <p class="mb-1 d-flex align-items-center gap-2">
+                  <i :class="roleIcon" style="color: var(--gold);"></i>
+                  <span style="color: var(--burgundy);">{{ roleLabel }}</span>
+                </p>
+                <p class="mb-0" style="font-size: 0.85rem; color: var(--dark-light);">
+                  Member since {{ formattedMemberSince }}
+                </p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="p-3 rounded-3" style="background: rgba(201, 168, 76, 0.08); border: 1px solid rgba(201, 168, 76, 0.15);">
                 <h6 class="mb-3 d-flex align-items-center" style="color: var(--burgundy);">
-                  <i class="bi bi-gift me-2" style="color: var(--gold);"></i>Recent Donations
+                  <i class="bi bi-envelope me-2" style="color: var(--gold);"></i>Contact
                 </h6>
-                <ul class="list-unstyled mb-0" style="font-size: 0.9rem;">
-                  <li class="mb-2 d-flex align-items-center">
-                    <span class="event-dot me-2"></span>
-                    Tithes - July 14, 2024
-                  </li>
-                  <li class="d-flex align-items-center">
-                    <span class="event-dot me-2"></span>
-                    Building Fund - July 7, 2024
-                  </li>
-                </ul>
+                <p class="mb-1" style="color: var(--burgundy);">
+                  <i class="bi bi-envelope-at me-1" style="color: var(--gold);"></i>{{ userStore.email || '—' }}
+                </p>
               </div>
             </div>
           </div>
@@ -182,6 +182,9 @@ const showEditForm = ref(false);
 const editUsername = ref(userStore.username);
 const editEmail = ref(userStore.email);
 const editAvatar = ref(userStore.avatar || "");
+const editBaptismDate = ref(userStore.baptismDate || "");
+const editSmallGroup = ref(userStore.smallGroup || "");
+const editMinistry = ref(userStore.ministry || "");
 const successMessage = ref("");
 
 const initials = computed(() => {
@@ -190,6 +193,13 @@ const initials = computed(() => {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+});
+
+const formattedMemberSince = computed(() => {
+  if (!userStore.memberSince) return "—";
+  const d = userStore.memberSince instanceof Date ? userStore.memberSince : new Date(userStore.memberSince);
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return `${months[d.getMonth()]} ${d.getFullYear()}`;
 });
 
 const roleLabel = computed(() => {
@@ -229,16 +239,24 @@ const roleBadgeStyle = computed(() => {
   return styles[userStore.role] || styles.guest;
 });
 
-function saveProfile() {
-  userStore.updateProfile({
-    username: editUsername.value,
-    email: editEmail.value,
-    avatar: editAvatar.value || null,
-  });
-  successMessage.value = "Profile updated successfully!";
-  setTimeout(() => {
-    successMessage.value = "";
-    showEditForm.value = false;
-  }, 2000);
+async function saveProfile() {
+  try {
+    await userStore.updateProfile({
+      username: editUsername.value,
+      email: editEmail.value,
+      avatar: editAvatar.value || null,
+      baptismDate: editBaptismDate.value,
+      smallGroup: editSmallGroup.value,
+      ministry: editMinistry.value,
+    });
+    successMessage.value = "Profile updated successfully!";
+    setTimeout(() => {
+      successMessage.value = "";
+      showEditForm.value = false;
+    }, 2000);
+  } catch (err) {
+    successMessage.value = "Failed to save profile. Please try again.";
+    setTimeout(() => { successMessage.value = ""; }, 3000);
+  }
 }
 </script>

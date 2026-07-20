@@ -26,6 +26,8 @@ function normalizePDFFile(item) {
     id: item.id,
     title: title.charAt(0).toUpperCase() + title.slice(1),
     url: getDirectUrl(item.id),
+    previewUrl: `https://drive.google.com/file/d/${item.id}/preview`,
+    downloadUrl: `https://drive.google.com/uc?export=download&id=${item.id}`,
     name: name,
     mimeType: item.mimeType || "application/pdf",
     size: item.size ? formatFileSize(Number(item.size)) : "",

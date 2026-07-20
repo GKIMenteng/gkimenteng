@@ -19,6 +19,10 @@ export const useUserStore = defineStore("user", () => {
   const avatar = ref(null);
   const role = ref("guest");
   const loading = ref(true);
+  const memberSince = ref(null);
+  const baptismDate = ref("");
+  const smallGroup = ref("");
+  const ministry = ref("");
 
   const isAuthenticated = computed(() => !!user.value);
 
@@ -50,6 +54,12 @@ export const useUserStore = defineStore("user", () => {
             photoURL: data.photoURL || null,
           }, { merge: true });
         }
+        if (userData.createdAt) {
+          memberSince.value = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
+        }
+        if (userData.baptismDate) baptismDate.value = userData.baptismDate;
+        if (userData.smallGroup) smallGroup.value = userData.smallGroup;
+        if (userData.ministry) ministry.value = userData.ministry;
         return userData.role || "guest";
       } else {
         await setDoc(docRef, {
@@ -134,6 +144,10 @@ export const useUserStore = defineStore("user", () => {
     email.value = "";
     avatar.value = null;
     role.value = "guest";
+    memberSince.value = null;
+    baptismDate.value = "";
+    smallGroup.value = "";
+    ministry.value = "";
   }
 
   async function updateRole(uid, newRole) {
@@ -143,10 +157,24 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  function updateProfileData(data) {
-    if (data.username) username.value = data.username;
-    if (data.email) email.value = data.email;
-    if (data.avatar) avatar.value = data.avatar;
+  async function updateProfileData(data) {
+    if (data.username !== undefined) username.value = data.username;
+    if (data.email !== undefined) email.value = data.email;
+    if (data.avatar !== undefined) avatar.value = data.avatar;
+    if (data.baptismDate !== undefined) baptismDate.value = data.baptismDate;
+    if (data.smallGroup !== undefined) smallGroup.value = data.smallGroup;
+    if (data.ministry !== undefined) ministry.value = data.ministry;
+
+    if (user.value) {
+      const updates = {};
+      if (data.username !== undefined) updates.displayName = data.username;
+      if (data.email !== undefined) updates.email = data.email;
+      if (data.avatar !== undefined) updates.photoURL = data.avatar || null;
+      if (data.baptismDate !== undefined) updates.baptismDate = data.baptismDate;
+      if (data.smallGroup !== undefined) updates.smallGroup = data.smallGroup;
+      if (data.ministry !== undefined) updates.ministry = data.ministry;
+      await setDoc(doc(db, "users", user.value.uid), updates, { merge: true });
+    }
   }
 
   return {
@@ -156,6 +184,10 @@ export const useUserStore = defineStore("user", () => {
     avatar,
     role,
     loading,
+    memberSince,
+    baptismDate,
+    smallGroup,
+    ministry,
     isAuthenticated,
     isAdmin,
     isManager,

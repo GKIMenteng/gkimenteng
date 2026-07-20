@@ -51,6 +51,34 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Events collection (calendar)
+    // ========================================
+    match /events/{docId} {
+
+      // Anyone can read events (calendar is public-facing, no auth required on route)
+      allow read: if true;
+
+      // Only managers can create, update, or delete events
+      allow create: if request.auth != null && isManager();
+      allow update: if request.auth != null && isManager();
+      allow delete: if request.auth != null && isManager();
+    }
+
+    // ========================================
+    // Volunteers collection
+    // ========================================
+    match /volunteers/{docId} {
+
+      // Any authenticated user can read volunteers (needed for calendar scheduling)
+      allow read: if request.auth != null;
+
+      // Only managers can create, update, or delete volunteers
+      allow create: if request.auth != null && isManager();
+      allow update: if request.auth != null && isManager();
+      allow delete: if request.auth != null && isManager();
+    }
+
+    // ========================================
     // Deny everything else by default
     // ========================================
     match /{document=**} {

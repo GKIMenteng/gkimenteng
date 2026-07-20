@@ -65,9 +65,10 @@
               <div class="flex-grow-1 d-flex flex-column gap-1">
                 <div v-for="ev in currentMonthEvents(day).slice(0, 2)" :key="ev.id">
                   <span
-                    class="badge-church d-inline-block text-truncate"
+                    class="badge-church d-inline-block text-truncate cursor-pointer"
                     style="font-size: 0.6rem; padding: 0.15rem 0.4rem; max-width: 100%;"
                     :title="ev.name"
+                    @click.stop="openDetailModal(ev)"
                   >
                     {{ ev.name }}
                   </span>
@@ -193,7 +194,7 @@
             </div>
             <div v-else class="row g-3">
               <div class="col-md-6" v-for="ev in sortedUpcoming" :key="ev.id">
-                <div class="volunteer-card h-100 position-relative">
+                <div class="volunteer-card h-100 position-relative cursor-pointer" @click="openDetailModal(ev)">
                   <div class="d-flex gap-3">
                     <div class="text-center flex-shrink-0">
                       <div
@@ -237,10 +238,10 @@
                     </div>
                   </div>
                   <div v-if="userStore.isManager" class="d-flex gap-1 mt-2 justify-content-end">
-                    <button class="btn btn-church-ghost btn-sm py-0" @click="openEditModal(ev)">
+                    <button class="btn btn-church-ghost btn-sm py-0" @click.stop="openEditModal(ev)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-church-ghost btn-sm py-0" style="color: var(--burgundy);" @click="openDeleteModal(ev)">
+                    <button class="btn btn-church-ghost btn-sm py-0" style="color: var(--burgundy);" @click.stop="openDeleteModal(ev)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -505,6 +506,134 @@
       </div>
     </div>
   </div>
+
+  <!-- Event Detail Modal -->
+  <div
+    class="modal-overlay"
+    v-if="showDetailModal"
+    @click.self="closeDetailModal"
+  >
+    <div class="church-card modal-card animate-fade-in-up">
+      <div class="modal-header-custom">
+        <div class="d-flex align-items-center gap-3">
+          <div
+            class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+            style="width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold-light) 0%, var(--cream) 100%);"
+          >
+            <i class="bi bi-calendar-event" style="color: var(--burgundy); font-size: 1.25rem;"></i>
+          </div>
+          <div>
+            <h5 class="mb-0" style="color: var(--burgundy); font-family: var(--font-heading);">
+              {{ detailEvent?.name }}
+            </h5>
+            <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Event Details</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" @click="closeDetailModal" type="button" aria-label="Close">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4">
+        <div class="d-flex flex-column gap-3">
+
+          <!-- Date -->
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-calendar3" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Date</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ formatDateDisplay(detailEvent?.date) }}</p>
+            </div>
+          </div>
+
+          <!-- Time -->
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-clock" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Time</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ formatTime(detailEvent?.time) }}</p>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div v-if="detailEvent?.location" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-geo-alt" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Location</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.location }}</p>
+            </div>
+          </div>
+
+          <!-- Pastor -->
+          <div v-if="detailEvent?.pastor" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-person-badge" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Pastor</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.pastor }}</p>
+            </div>
+          </div>
+
+          <!-- Volunteers by position -->
+          <template v-if="detailEvent?.volunteers">
+            <div v-for="(names, pos) in detailEvent.volunteers" :key="pos" v-if="names && names.length" class="d-flex align-items-center gap-3">
+              <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+                <i :class="posIcon(pos)" style="color: var(--gold); font-size: 0.9rem;"></i>
+              </div>
+              <div>
+                <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">{{ pos }}</p>
+                <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ names.join(', ') }}</p>
+              </div>
+            </div>
+          </template>
+          <div v-else-if="detailEvent?.volunteerNames && detailEvent.volunteerNames.length" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-people" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Volunteers</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.volunteerNames.join(', ') }}</p>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div v-if="detailEvent?.notes" class="d-flex gap-3">
+            <div class="d-flex align-items-start justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-chat-quote" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Notes</p>
+              <p class="mb-0" style="color: var(--burgundy); font-style: italic;">{{ detailEvent.notes }}</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Manager actions -->
+        <div v-if="userStore.isManager" class="d-flex gap-2 mt-4 pt-3 border-top" style="border-color: rgba(201, 168, 76, 0.2) !important;">
+          <button class="btn btn-church-primary flex-fill" @click="editFromDetail">
+            <i class="bi bi-pencil me-2"></i>Edit
+          </button>
+          <button class="btn btn-church-outline" style="color: var(--burgundy); border-color: rgba(114, 47, 55, 0.2);" @click="deleteFromDetail">
+            <i class="bi bi-trash me-2"></i>Delete
+          </button>
+        </div>
+
+        <div class="text-center mt-3">
+          <button class="btn btn-church-outline" @click="closeDetailModal">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -604,6 +733,8 @@ const editingId = ref(null);
 const saving = ref(false);
 const deleteTarget = ref(null);
 const formError = ref("");
+const showDetailModal = ref(false);
+const detailEvent = ref(null);
 
 const selectedDateFull = computed(() => {
   if (selectedDay.value === null) return "";
@@ -759,6 +890,30 @@ function closeModal() {
 function openDeleteModal(ev) {
   deleteTarget.value = ev;
   showDeleteModal.value = true;
+}
+
+function openDetailModal(ev) {
+  detailEvent.value = ev;
+  showDetailModal.value = true;
+}
+
+function closeDetailModal() {
+  showDetailModal.value = false;
+  detailEvent.value = null;
+}
+
+function editFromDetail() {
+  const ev = detailEvent.value;
+  if (!ev) return;
+  closeDetailModal();
+  openEditModal(ev);
+}
+
+function deleteFromDetail() {
+  const ev = detailEvent.value;
+  if (!ev) return;
+  closeDetailModal();
+  openDeleteModal(ev);
 }
 
 function getInitials(name) {

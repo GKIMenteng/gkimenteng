@@ -349,7 +349,7 @@ const formError = ref("");
 const pageError = ref("");
 
 const positionOptions = ["Soundman", "Multimedia", "Streaming", "Musician"];
-const instrumentOptions = ["Piano", "Electone", "Keyboard", "Guitar", "Drum"];
+const instrumentOptions = ["Piano", "Electone", "Keyboard", "Guitar", "Drum", "Violin"];
 
 const positionIcons = {
   Soundman: "bi bi-speaker",

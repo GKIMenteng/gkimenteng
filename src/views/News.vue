@@ -68,7 +68,7 @@
 
             <div class="mt-auto d-flex gap-2">
               <a
-                :href="doc.url"
+                :href="doc.previewUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="btn btn-church-primary btn-sm flex-grow-1"
@@ -76,11 +76,10 @@
                 <i class="bi bi-eye me-1"></i>View
               </a>
               <a
-                :href="doc.url"
+                :href="doc.downloadUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="btn btn-church-outline btn-sm flex-grow-1"
-                :download="doc.name"
               >
                 <i class="bi bi-download me-1"></i>Download
               </a>
