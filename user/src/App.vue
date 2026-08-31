@@ -45,6 +45,11 @@
               </router-link>
             </li>
             <li class="nav-item">
+              <router-link class="nav-link" to="/registration">
+                <i class="bi bi-ticket-perforated me-1 d-lg-none"></i>Registration
+              </router-link>
+            </li>
+            <li class="nav-item">
               <router-link class="nav-link" to="/volunteers">
                 <i class="bi bi-people me-1 d-lg-none"></i>Volunteers
               </router-link>

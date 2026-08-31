@@ -4,6 +4,7 @@ import Home from "../views/Home.vue";
 import Announcements from "../views/Announcements.vue";
 import News from "../views/News.vue";
 import Calendar from "../views/Calendar.vue";
+import Registration from "../views/Registration.vue";
 import Volunteers from "../views/Volunteers.vue";
 import About from "../views/About.vue";
 import Profile from "../views/Profile.vue";
@@ -20,6 +21,8 @@ const router = createRouter({
     { path: "/news", name: "news", component: News },
     { path: "/announcements", name: "announcements", component: Announcements },
     { path: "/calendar", name: "calendar", component: Calendar },
+    { path: "/registration", name: "registration", component: Registration },
+    { path: "/registration/:concertId", name: "registration-detail", component: Registration },
     { path: "/volunteers", name: "volunteers", component: Volunteers },
     { path: "/about", name: "about", component: About },
     { path: "/profile", name: "profile", component: Profile, meta: { requiresAuth: true } },

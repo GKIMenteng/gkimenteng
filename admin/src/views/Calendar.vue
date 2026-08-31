@@ -71,6 +71,7 @@
                     @click.stop="openDetailModal(ev)"
                   >
                     {{ ev.name }}
+                    <span v-if="ev.type" class="ms-1" style="font-size: 0.7em; opacity: 0.8;">[{{ ev.type }}]</span>
                   </span>
                 </div>
                 <small
@@ -136,7 +137,10 @@
               >
                 <div class="d-flex justify-content-between align-items-start">
                   <div class="flex-grow-1">
-                    <h6 class="mb-1" style="color: var(--burgundy);">{{ ev.name }}</h6>
+                    <h6 class="mb-1" style="color: var(--burgundy);">
+                      {{ ev.name }}
+                      <span v-if="ev.type" class="badge ms-2" style="font-size: 0.65rem; background: var(--gold-light); color: var(--burgundy);">{{ ev.type }}</span>
+                    </h6>
                     <p class="mb-1" style="font-size: 0.85rem;">
                       <i class="bi bi-clock me-1" style="color: var(--gold);"></i>{{ formatTime(ev.time) }}
                     </p>
@@ -210,7 +214,10 @@
                       </div>
                     </div>
                     <div class="flex-grow-1 min-width-0">
-                      <h6 class="mb-2" style="color: var(--burgundy);">{{ ev.name }}</h6>
+                      <h6 class="mb-2" style="color: var(--burgundy);">
+                        {{ ev.name }}
+                        <span v-if="ev.type" class="badge ms-2" style="font-size: 0.65rem; background: var(--gold-light); color: var(--burgundy);">{{ ev.type }}</span>
+                      </h6>
                       <p class="mb-1" style="font-size: 0.85rem;">
                         <i class="bi bi-clock me-1" style="color: var(--gold);"></i>{{ formatTime(ev.time) }}
                       </p>
@@ -303,6 +310,16 @@
               <input type="text" class="form-control" v-model="form.name" placeholder="e.g. Sunday Service" required />
             </div>
 
+            <div class="mb-3">
+              <label class="form-label d-flex align-items-center gap-2">
+                <i class="bi bi-tag" style="color: var(--gold);"></i>Event Type
+              </label>
+              <select class="form-select" v-model="form.type" required>
+                <option value="sunday service">Sunday Service</option>
+                <option value="concert">Concert</option>
+              </select>
+            </div>
+
             <div class="row g-3 mb-3">
               <div class="col-sm-6">
                 <label class="form-label d-flex align-items-center gap-2">
@@ -325,128 +342,172 @@
               <input type="text" class="form-control" v-model="form.location" placeholder="e.g. Main Sanctuary" />
             </div>
 
-            <div class="mb-3">
-              <label class="form-label d-flex align-items-center gap-2">
-                <i class="bi bi-person-badge" style="color: var(--gold);"></i>Pastor
-              </label>
-              <input type="text" class="form-control" v-model="form.pastor" placeholder="e.g. Rev. Dr. Michael Anderson" />
-            </div>
-
-            <!-- Volunteers by Position -->
-            <div class="mb-4">
-              <label class="form-label d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-people" style="color: var(--gold);"></i>Volunteers
-              </label>
-              <p class="mb-3" style="font-size: 0.8rem; color: var(--dark-light);">
-                Assign volunteers for each ministry position
-              </p>
-
-              <div v-if="volStore.volunteers.length === 0" style="font-size: 0.85rem; color: var(--dark-light); padding: 1rem 0;">
-                No volunteers found. Please <router-link to="/volunteers" style="color: var(--gold-dark);">add volunteers</router-link> first.
+            <!-- Sunday Service Fields -->
+            <template v-if="form.type === 'sunday service'">
+              <div class="mb-3">
+                <label class="form-label d-flex align-items-center gap-2">
+                  <i class="bi bi-person-badge" style="color: var(--gold);"></i>Pastor
+                </label>
+                <input type="text" class="form-control" v-model="form.pastor" placeholder="e.g. Rev. Dr. Michael Anderson" />
               </div>
 
-              <template v-else>
-                <!-- Mandatory positions -->
-                <div
-                  v-for="pos in mandatoryPositions"
-                  :key="pos"
-                  class="vol-position-group"
-                >
-                  <div class="d-flex align-items-center gap-2 mb-2">
-                    <i :class="posIcon(pos)" style="color: var(--gold);"></i>
-                    <strong style="color: var(--burgundy); font-size: 0.9rem;">{{ pos }}</strong>
-                    <span class="text-danger" style="font-size: 0.75rem;">required</span>
-                  </div>
+              <!-- Volunteers by Position -->
+              <div class="mb-4">
+                <label class="form-label d-flex align-items-center gap-2 mb-0">
+                  <i class="bi bi-people" style="color: var(--gold);"></i>Volunteers
+                </label>
+                <p class="mb-3" style="font-size: 0.8rem; color: var(--dark-light);">
+                  Assign volunteers for each ministry position
+                </p>
+
+                <div v-if="volStore.volunteers.length === 0" style="font-size: 0.85rem; color: var(--dark-light); padding: 1rem 0;">
+                  No volunteers found. Please <router-link to="/volunteers" style="color: var(--gold-dark);">add volunteers</router-link> first.
+                </div>
+
+                <template v-else>
+                  <!-- Mandatory positions -->
                   <div
-                    v-if="getVolunteersByPosition(pos).length === 0"
-                    style="font-size: 0.8rem; color: var(--dark-light); padding: 0.5rem 0;"
+                    v-for="pos in mandatoryPositions"
+                    :key="pos"
+                    class="vol-position-group"
                   >
-                    No volunteers with {{ pos }} position
-                  </div>
-                  <div v-else class="d-flex flex-wrap gap-2 mb-3">
-                    <label
-                      v-for="v in getVolunteersByPosition(pos)"
-                      :key="v.id"
-                      class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 cursor-pointer volunteer-chip"
-                      :class="form.volunteers[pos]?.includes(v.name) ? 'volunteer-chip-checked' : 'volunteer-chip-unchecked'"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="v.name"
-                        :checked="form.volunteers[pos]?.includes(v.name)"
-                        @change="toggleVolunteer(pos, v.name)"
-                        class="position-input"
-                      />
-                      <div class="avatar-circle avatar-circle-sm" style="width: 28px; height: 28px; font-size: 0.65rem;">
-                        {{ getInitials(v.name) }}
-                      </div>
-                      <span style="font-size: 0.85rem;">{{ v.name }}</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Streaming toggle -->
-                <div class="vol-position-group">
-                  <div class="d-flex align-items-center gap-2 mb-2">
-                    <i class="bi bi-broadcast" style="color: var(--gold);"></i>
-                    <strong style="color: var(--burgundy); font-size: 0.9rem;">Streaming</strong>
-                    <button
-                      type="button"
-                      class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1"
-                      :class="hasStreaming ? 'btn-church-primary' : 'btn-church-outline'"
-                      @click="toggleStreaming"
-                      style="font-size: 0.75rem; text-transform: none; letter-spacing: normal;"
-                    >
-                      <i :class="hasStreaming ? 'bi bi-check-circle-fill' : 'bi bi-circle'"></i>
-                      {{ hasStreaming ? 'Enabled' : 'Disabled' }}
-                    </button>
-                  </div>
-
-                  <Transition name="slide-fade">
-                    <div v-if="hasStreaming" key="streaming-vols">
-                      <div
-                        v-if="getVolunteersByPosition('Streaming').length === 0"
-                        style="font-size: 0.8rem; color: var(--dark-light); padding: 0.5rem 0;"
-                      >
-                        No volunteers with Streaming position
-                      </div>
-                      <div v-else class="d-flex flex-wrap gap-2">
-                        <label
-                          v-for="v in getVolunteersByPosition('Streaming')"
-                          :key="v.id"
-                          class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 cursor-pointer volunteer-chip"
-                          :class="form.volunteers['Streaming']?.includes(v.name) ? 'volunteer-chip-checked' : 'volunteer-chip-unchecked'"
-                        >
-                          <input
-                            type="checkbox"
-                            :value="v.name"
-                            :checked="form.volunteers['Streaming']?.includes(v.name)"
-                            @change="toggleVolunteer('Streaming', v.name)"
-                            class="position-input"
-                          />
-                          <div class="avatar-circle avatar-circle-sm" style="width: 28px; height: 28px; font-size: 0.65rem;">
-                            {{ getInitials(v.name) }}
-                          </div>
-                          <span style="font-size: 0.85rem;">{{ v.name }}</span>
-                        </label>
-                      </div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <i :class="posIcon(pos)" style="color: var(--gold);"></i>
+                      <strong style="color: var(--burgundy); font-size: 0.9rem;">{{ pos }}</strong>
+                      <span class="text-danger" style="font-size: 0.75rem;">required</span>
                     </div>
-                  </Transition>
-                </div>
-              </template>
-            </div>
+                    <div
+                      v-if="getVolunteersByPosition(pos).length === 0"
+                      style="font-size: 0.8rem; color: var(--dark-light); padding: 0.5rem 0;"
+                    >
+                      No volunteers with {{ pos }} position
+                    </div>
+                    <div v-else class="d-flex flex-wrap gap-2 mb-3">
+                      <label
+                        v-for="v in getVolunteersByPosition(pos)"
+                        :key="v.id"
+                        class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 cursor-pointer volunteer-chip"
+                        :class="form.volunteers[pos]?.includes(v.name) ? 'volunteer-chip-checked' : 'volunteer-chip-unchecked'"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="v.name"
+                          :checked="form.volunteers[pos]?.includes(v.name)"
+                          @change="toggleVolunteer(pos, v.name)"
+                          class="position-input"
+                        />
+                        <div class="avatar-circle avatar-circle-sm" style="width: 28px; height: 28px; font-size: 0.65rem;">
+                          {{ getInitials(v.name) }}
+                        </div>
+                        <span style="font-size: 0.85rem;">{{ v.name }}</span>
+                      </label>
+                    </div>
+                  </div>
 
-            <div class="mb-4">
-              <label class="form-label d-flex align-items-center gap-2">
-                <i class="bi bi-journal-text" style="color: var(--gold);"></i>Notes
-              </label>
-              <textarea
-                class="form-control"
-                v-model="form.notes"
-                rows="3"
-                placeholder="Additional notes or instructions..."
-              ></textarea>
-            </div>
+                  <!-- Streaming toggle -->
+                  <div class="vol-position-group">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <i class="bi bi-broadcast" style="color: var(--gold);"></i>
+                      <strong style="color: var(--burgundy); font-size: 0.9rem;">Streaming</strong>
+                      <button
+                        type="button"
+                        class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1"
+                        :class="hasStreaming ? 'btn-church-primary' : 'btn-church-outline'"
+                        @click="toggleStreaming"
+                        style="font-size: 0.75rem; text-transform: none; letter-spacing: normal;"
+                      >
+                        <i :class="hasStreaming ? 'bi bi-check-circle-fill' : 'bi bi-circle'"></i>
+                        {{ hasStreaming ? 'Enabled' : 'Disabled' }}
+                      </button>
+                    </div>
+
+                    <Transition name="slide-fade">
+                      <div v-if="hasStreaming" key="streaming-vols">
+                        <div
+                          v-if="getVolunteersByPosition('Streaming').length === 0"
+                          style="font-size: 0.8rem; color: var(--dark-light); padding: 0.5rem 0;"
+                        >
+                          No volunteers with Streaming position
+                        </div>
+                        <div v-else class="d-flex flex-wrap gap-2">
+                          <label
+                            v-for="v in getVolunteersByPosition('Streaming')"
+                            :key="v.id"
+                            class="d-flex align-items-center gap-2 px-3 py-2 rounded-3 cursor-pointer volunteer-chip"
+                            :class="form.volunteers['Streaming']?.includes(v.name) ? 'volunteer-chip-checked' : 'volunteer-chip-unchecked'"
+                          >
+                            <input
+                              type="checkbox"
+                              :value="v.name"
+                              :checked="form.volunteers['Streaming']?.includes(v.name)"
+                              @change="toggleVolunteer('Streaming', v.name)"
+                              class="position-input"
+                            />
+                            <div class="avatar-circle avatar-circle-sm" style="width: 28px; height: 28px; font-size: 0.65rem;">
+                              {{ getInitials(v.name) }}
+                            </div>
+                            <span style="font-size: 0.85rem;">{{ v.name }}</span>
+                          </label>
+                        </div>
+                      </div>
+                    </Transition>
+                  </div>
+                </template>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label d-flex align-items-center gap-2">
+                  <i class="bi bi-journal-text" style="color: var(--gold);"></i>Notes
+                </label>
+                <textarea
+                  class="form-control"
+                  v-model="form.notes"
+                  rows="3"
+                  placeholder="Additional notes or instructions..."
+                ></textarea>
+              </div>
+            </template>
+
+            <!-- Concert Fields -->
+            <template v-else-if="form.type === 'concert'">
+              <div class="mb-3">
+                <label class="form-label d-flex align-items-center gap-2">
+                  <i class="bi bi-ticket-perforated" style="color: var(--gold);"></i>Concert ID
+                </label>
+                <input type="text" class="form-control" v-model="form.concertId" placeholder="e.g. CHR2024-001" required />
+                <div class="form-text">Unique identifier for registration URL (e.g. /registration/CHR2024-001)</div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                  <label class="form-label d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle" style="color: var(--gold);"></i>Open Registration
+                  </label>
+                  <select class="form-select" v-model="form.isOpenRegistration">
+                    <option :value="false">No</option>
+                    <option :value="true">Yes</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label d-flex align-items-center gap-2">
+                    <i class="bi bi-people" style="color: var(--gold);"></i>Capacity
+                  </label>
+                  <input type="number" class="form-control" v-model="form.capacity" placeholder="e.g. 500" min="1" />
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label d-flex align-items-center gap-2">
+                  <i class="bi bi-journal-text" style="color: var(--gold);"></i>Notes
+                </label>
+                <textarea
+                  class="form-control"
+                  v-model="form.notes"
+                  rows="3"
+                  placeholder="Additional notes or instructions..."
+                ></textarea>
+              </div>
+            </template>
 
             <div class="d-flex gap-2 pt-2">
               <button type="submit" class="btn btn-church-primary flex-fill" :disabled="saving">
@@ -567,6 +628,46 @@
             <div>
               <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Location</p>
               <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.location }}</p>
+            </div>
+          </div>
+
+          <!-- Event Type -->
+          <div v-if="detailEvent?.type" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-tag" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Event Type</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy); text-transform: capitalize;">{{ detailEvent.type }}</p>
+            </div>
+          </div>
+
+          <!-- Concert Fields -->
+          <div v-if="detailEvent?.type === 'concert' && detailEvent?.concertId" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-ticket-perforated" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Concert ID</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.concertId }}</p>
+            </div>
+          </div>
+          <div v-if="detailEvent?.type === 'concert' && detailEvent?.isOpenRegistration !== undefined" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-check-circle" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Open Registration</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.isOpenRegistration ? 'Yes' : 'No' }}</p>
+            </div>
+          </div>
+          <div v-if="detailEvent?.type === 'concert' && detailEvent?.capacity" class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+              <i class="bi bi-people" style="color: var(--gold); font-size: 0.9rem;"></i>
+            </div>
+            <div>
+              <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Capacity</p>
+              <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ detailEvent.capacity }}</p>
             </div>
           </div>
 
@@ -781,6 +882,7 @@ const form = reactive({
   date: "",
   time: "",
   location: "",
+  type: "sunday service",
   pastor: "",
   volunteers: {
     Soundman: [],
@@ -789,6 +891,9 @@ const form = reactive({
     Streaming: [],
   },
   notes: "",
+  isOpenRegistration: false,
+  capacity: "",
+  concertId: "",
 });
 
 const hasStreaming = ref(false);
@@ -798,9 +903,13 @@ function emptyForm() {
   form.date = "";
   form.time = "";
   form.location = "";
+  form.type = "sunday service";
   form.pastor = "";
   form.volunteers = { Soundman: [], Multimedia: [], Musician: [], Streaming: [] };
   form.notes = "";
+  form.isOpenRegistration = false;
+  form.capacity = "";
+  form.concertId = "";
   hasStreaming.value = false;
 }
 
@@ -855,8 +964,12 @@ function openEditModal(ev) {
   form.date = ev.date || "";
   form.time = ev.time || "";
   form.location = ev.location || "";
+  form.type = ev.type || "sunday service";
   form.pastor = ev.pastor || "";
   form.notes = ev.notes || "";
+  form.isOpenRegistration = ev.isOpenRegistration || false;
+  form.capacity = ev.capacity ? String(ev.capacity) : "";
+  form.concertId = ev.concertId || "";
 
   // Populate volunteers from event data
   form.volunteers = { Soundman: [], Multimedia: [], Musician: [], Streaming: [] };
@@ -925,18 +1038,26 @@ async function handleSave() {
   saving.value = true;
   formError.value = "";
 
-  // Validate mandatory positions
-  for (const pos of mandatoryPositions) {
-    if (!form.volunteers[pos] || form.volunteers[pos].length === 0) {
-      formError.value = `Please assign at least one volunteer for ${pos}.`;
+  if (form.type === "sunday service") {
+    // Validate mandatory positions
+    for (const pos of mandatoryPositions) {
+      if (!form.volunteers[pos] || form.volunteers[pos].length === 0) {
+        formError.value = `Please assign at least one volunteer for ${pos}.`;
+        saving.value = false;
+        return;
+      }
+    }
+    if (hasStreaming.value && (!form.volunteers.Streaming || form.volunteers.Streaming.length === 0)) {
+      formError.value = "Streaming is enabled — please assign at least one volunteer for Streaming.";
       saving.value = false;
       return;
     }
-  }
-  if (hasStreaming.value && (!form.volunteers.Streaming || form.volunteers.Streaming.length === 0)) {
-    formError.value = "Streaming is enabled — please assign at least one volunteer for Streaming.";
-    saving.value = false;
-    return;
+  } else if (form.type === "concert") {
+    if (form.isOpenRegistration && (!form.capacity || form.capacity < 1)) {
+      formError.value = "Capacity is required when registration is open.";
+      saving.value = false;
+      return;
+    }
   }
 
   // Build flat volunteerNames (backward compat) from all positions
@@ -953,10 +1074,14 @@ async function handleSave() {
       date: form.date,
       time: form.time,
       location: form.location.trim(),
+      type: form.type,
       pastor: form.pastor.trim(),
       volunteers: { ...form.volunteers },
       volunteerNames: Array.from(allNames),
       notes: form.notes.trim(),
+      isOpenRegistration: form.isOpenRegistration,
+      capacity: form.capacity ? parseInt(form.capacity) : null,
+      concertId: form.concertId.trim(),
     };
     if (editing.value) {
       await eStore.updateEvent(editingId.value, data);
