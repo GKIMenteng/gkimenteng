@@ -158,10 +158,31 @@
                 {{ registrationError }}
               </div>
 
-              <div v-if="registrationSuccess" class="alert d-flex align-items-center gap-2 mb-4 py-2 px-3"
-                style="background: rgba(40, 167, 69, 0.08); border: 1px solid rgba(40, 167, 69, 0.2); color: #28a745; border-radius: var(--radius-sm); font-size: 0.9rem;">
-                <i class="bi bi-check-circle-fill"></i>
-                Registration successful! We'll send a confirmation to your email.
+              <div v-if="registrationSuccess" class="mb-4">
+                <div class="alert d-flex align-items-center gap-2 mb-3 py-2 px-3"
+                  style="background: rgba(40, 167, 69, 0.08); border: 1px solid rgba(40, 167, 69, 0.2); color: #28a745; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                  <i class="bi bi-check-circle-fill"></i>
+                  Registration successful! We'll send a confirmation to your email.
+                </div>
+                
+                <div class="church-card p-4 text-center" style="background: var(--white);">
+                  <h6 class="mb-3" style="color: var(--burgundy);">Your QR Code Ticket</h6>
+                  <p class="text-muted small mb-3">Save this QR code for entry. Format: ConcertID_UID_TIMESTAMP_RANDOM</p>
+                  <div class="d-inline-block p-3 bg-white rounded" style="border: 1px solid rgba(201, 168, 76, 0.2);">
+                    <QRCode :value="qrCodeData" :size="200" level="M" />
+                  </div>
+                  <div class="mt-3 font-monospace small" style="color: var(--dark-light); word-break: break-all;">
+                    {{ qrCodeData }}
+                  </div>
+                  <div class="mt-3 d-flex gap-2 justify-content-center">
+                    <button class="btn btn-church-primary btn-sm" @click="downloadQrCode">
+                      <i class="bi bi-download me-1"></i>Download QR Code
+                    </button>
+                    <router-link to="/registration" class="btn btn-church-outline btn-sm">
+                      <i class="bi bi-arrow-left me-1"></i>Back to Concerts
+                    </router-link>
+                  </div>
+                </div>
               </div>
 
               <form @submit.prevent="handleRegistration" v-if="!registrationSuccess">
@@ -230,6 +251,9 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useEventsStore } from "../stores/events";
 import { useUserStore } from "../stores/user";
+import QRCode from "qrcode.vue";
+import { db } from "../firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 const userStore = useUserStore();
 const eStore = useEventsStore();
@@ -240,6 +264,7 @@ const router = useRouter();
 const registering = ref(false);
 const registrationError = ref("");
 const registrationSuccess = ref(false);
+const qrCodeData = ref("");
 
 const regForm = ref({
   fullName: "",
@@ -275,6 +300,7 @@ const concertEvent = computed(() => {
 watch(concertId, (newId) => {
   registrationError.value = "";
   registrationSuccess.value = false;
+  qrCodeData.value = "";
   regForm.value = {
     fullName: "",
     email: "",
@@ -313,6 +339,35 @@ function decreaseAttendance() {
   }
 }
 
+function generateRandomString(length = 4) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function generateQrCodeData() {
+  const concert = concertEvent.value;
+  const user = userStore.user;
+  const timestamp = Date.now();
+  const random = generateRandomString(4);
+  const uid = user?.uid || "GUEST";
+  const cId = concert?.concertId || "UNKNOWN";
+  return `${cId}_${uid}_${timestamp}_${random}`;
+}
+
+function downloadQrCode() {
+  const canvas = document.querySelector("canvas");
+  if (canvas) {
+    const link = document.createElement("a");
+    link.download = `ticket-${qrCodeData.value}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+}
+
 async function handleRegistration() {
   registering.value = true;
   registrationError.value = "";
@@ -340,15 +395,36 @@ async function handleRegistration() {
   }
 
   try {
-    // In a real app, you'd save to a registrations collection in Firebase
-    // For now, we'll simulate success
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Generate QR code data
+    const qrData = generateQrCodeData();
+    qrCodeData.value = qrData;
+
+    // Save registration to Firestore
+    const concert = concertEvent.value;
+    const user = userStore.user;
+    
+    await addDoc(collection(db, "registrations"), {
+      concertId: concert?.concertId || "",
+      concertName: concert?.name || "",
+      concertDate: concert?.date || "",
+      concertTime: concert?.time || "",
+      concertLocation: concert?.location || "",
+      fullName: regForm.value.fullName.trim(),
+      email: regForm.value.email.trim(),
+      phone: regForm.value.phone.trim(),
+      totalAttendance: regForm.value.totalAttendance,
+      qrCodeData: qrData,
+      userId: user?.uid || null,
+      userEmail: user?.email || null,
+      createdAt: serverTimestamp(),
+    });
 
     registrationSuccess.value = true;
+    
     // Optionally redirect back to list after a delay
     setTimeout(() => {
       router.push("/registration");
-    }, 2000);
+    }, 5000);
   } catch (err) {
     registrationError.value = err.message || "Registration failed. Please try again.";
   } finally {
