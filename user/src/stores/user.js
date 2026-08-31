@@ -36,6 +36,7 @@ export const useUserStore = defineStore("user", () => {
   });
 
   let authUnsubscribe;
+  let initPromise = null;
 
   async function fetchOrCreateRole(uid, data) {
     try {
@@ -73,7 +74,8 @@ export const useUserStore = defineStore("user", () => {
   }
 
   function init() {
-    return new Promise((resolve) => {
+    if (initPromise) return initPromise;
+    initPromise = new Promise((resolve) => {
       let resolved = false;
       authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
@@ -100,6 +102,7 @@ export const useUserStore = defineStore("user", () => {
         }
       });
     });
+    return initPromise;
   }
 
   function cleanup() {

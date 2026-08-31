@@ -25,15 +25,15 @@ const router = createRouter({
     { path: "/profile", name: "profile", component: Profile, meta: { requiresAuth: true } },
     { path: "/login", name: "login", component: Login },
     { path: "/register", name: "register", component: Register },
+    { path: "/:pathMatch(.*)*", redirect: "/" },
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
 
   if (userStore.loading) {
-    next();
-    return;
+    await userStore.init();
   }
 
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {

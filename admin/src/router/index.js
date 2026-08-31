@@ -27,15 +27,23 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
+
+  if (userStore.loading) {
+    await userStore.init();
+  }
 
   if ((to.meta.requiresAuth || to.meta.requiresManager) && !userStore.isAuthenticated) {
     next({ name: "login", query: { redirect: to.fullPath } });
   } else if (to.meta.requiresManager && !userStore.isManager) {
     next({ name: "unauthorized" });
-  } else if (to.name === "login" && userStore.isAuthenticated && userStore.isManager) {
-    next({ name: "home" });
+  } else if (to.name === "login" && userStore.isAuthenticated) {
+    if (userStore.isManager) {
+      next({ name: "home" });
+    } else {
+      next({ name: "unauthorized" });
+    }
   } else {
     next();
   }
