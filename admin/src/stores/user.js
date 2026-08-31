@@ -26,6 +26,10 @@ export const useUserStore = defineStore("user", () => {
 
   const isAuthenticated = computed(() => !!user.value);
 
+  const isAdmin = computed(() => role.value === "admin");
+
+  const isManager = computed(() => role.value === "manager" || role.value === "admin");
+
   const initials = computed(() => {
     const name = username.value || "Guest";
     return name
@@ -146,6 +150,13 @@ export const useUserStore = defineStore("user", () => {
     ministry.value = "";
   }
 
+  async function updateRole(uid, newRole) {
+    await setDoc(doc(db, "users", uid), { role: newRole }, { merge: true });
+    if (uid === user.value?.uid) {
+      role.value = newRole;
+    }
+  }
+
   async function updateProfileData(data) {
     if (data.username !== undefined) username.value = data.username;
     if (data.email !== undefined) email.value = data.email;
@@ -178,6 +189,8 @@ export const useUserStore = defineStore("user", () => {
     smallGroup,
     ministry,
     isAuthenticated,
+    isAdmin,
+    isManager,
     initials,
     init,
     cleanup,
@@ -185,6 +198,7 @@ export const useUserStore = defineStore("user", () => {
     signUpWithEmail,
     signInWithGoogle,
     logout,
+    updateRole,
     updateProfile: updateProfileData,
   };
 });

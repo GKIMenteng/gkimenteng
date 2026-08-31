@@ -2,13 +2,16 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import {
   collection,
+  addDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   doc,
   query,
   orderBy,
   arrayUnion,
   arrayRemove,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -27,6 +30,24 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     } finally {
       loading.value = false;
     }
+  }
+
+  async function createAnnouncement(data) {
+    await addDoc(collection(db, "announcements"), {
+      ...data,
+      likes: 0,
+      likedBy: [],
+      comments: [],
+      createdAt: serverTimestamp(),
+    });
+  }
+
+  async function updateAnnouncement(id, data) {
+    await updateDoc(doc(db, "announcements", id), data);
+  }
+
+  async function deleteAnnouncement(id) {
+    await deleteDoc(doc(db, "announcements", id));
   }
 
   async function toggleLike(id, uid, userName) {
@@ -71,6 +92,9 @@ export const useAnnouncementsStore = defineStore("announcements", () => {
     announcements,
     loading,
     fetchAnnouncements,
+    createAnnouncement,
+    updateAnnouncement,
+    deleteAnnouncement,
     toggleLike,
     addComment,
     deleteComment,
