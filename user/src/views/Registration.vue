@@ -253,7 +253,7 @@ import { useEventsStore } from "../stores/events";
 import { useUserStore } from "../stores/user";
 import QRCode from "qrcode.vue";
 import { db } from "../firebase";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 
 const userStore = useUserStore();
 const eStore = useEventsStore();
@@ -394,13 +394,42 @@ async function handleRegistration() {
     return;
   }
 
+  const concert = concertEvent.value;
+  
+  // Check capacity
+  if (concert?.capacity) {
+    try {
+      // Fetch existing registrations for this concert to calculate current attendees
+      const q = query(collection(db, "registrations"), where("concertId", "==", concert.concertId));
+      const snapshot = await getDocs(q);
+      
+      const currentAttendees = snapshot.docs.reduce((sum, doc) => {
+        const data = doc.data();
+        return sum + (data.totalAttendance || 0);
+      }, 0);
+      
+      const requestedAttendees = regForm.value.totalAttendance;
+      const availableSpots = concert.capacity - currentAttendees;
+      
+      if (requestedAttendees > availableSpots) {
+        registrationError.value = availableSpots <= 0 
+          ? "This concert has reached maximum capacity."
+          : `Only ${availableSpots} spot${availableSpots !== 1 ? 's' : ''} remaining. You requested ${requestedAttendees}.`;
+        registering.value = false;
+        return;
+      }
+    } catch (err) {
+      console.warn("Capacity check failed:", err);
+      // Continue with registration if check fails (fail-open)
+    }
+  }
+
   try {
     // Generate QR code data
     const qrData = generateQrCodeData();
     qrCodeData.value = qrData;
 
     // Save registration to Firestore
-    const concert = concertEvent.value;
     const user = userStore.user;
     
     await addDoc(collection(db, "registrations"), {
