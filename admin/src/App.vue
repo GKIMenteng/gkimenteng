@@ -44,10 +44,14 @@
                 <i class="bi bi-calendar3 me-1 d-lg-none"></i>Calendar
               </router-link>
             </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/registrations">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="registrationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-ticket-perforated me-1 d-lg-none"></i>Registrations
-              </router-link>
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="registrationsDropdown">
+                <li><router-link class="dropdown-item" to="/registrations"><i class="bi bi-table me-2"></i>View Registration Data</router-link></li>
+                <li><router-link class="dropdown-item" to="/qr-scanner"><i class="bi bi-qr-code-scan me-2"></i>Scan QR Code</router-link></li>
+              </ul>
             </li>
             <li class="nav-item">
               <router-link class="nav-link" to="/volunteers">

@@ -94,6 +94,7 @@
                   <th>Phone</th>
                   <th>Attendees</th>
                   <th>Registered</th>
+                  <th>Check-In</th>
                   <th>User</th>
                   <th class="pe-3 text-end">Actions</th>
                 </tr>
@@ -118,6 +119,14 @@
                     <span class="badge bg-light text-dark">{{ reg.totalAttendance }}</span>
                   </td>
                   <td class="small">{{ formatDateTime(reg.createdAt) }}</td>
+                  <td>
+                    <span v-if="reg.checkedIn" class="badge bg-success">
+                      <i class="bi bi-check-circle me-1"></i>Checked In
+                    </span>
+                    <span v-else class="badge bg-warning text-dark">
+                      <i class="bi bi-clock me-1"></i>Pending
+                    </span>
+                  </td>
                   <td>
                     <span v-if="reg.userId" class="badge" style="background: var(--gold-light); color: var(--burgundy);">
                       <i class="bi bi-person-check me-1"></i>Logged In

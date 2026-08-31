@@ -5,6 +5,7 @@ import Announcements from "../views/Announcements.vue";
 import News from "../views/News.vue";
 import Calendar from "../views/Calendar.vue";
 import RegistrationsData from "../views/RegistrationsData.vue";
+import QrScanner from "../views/QrScanner.vue";
 import Volunteers from "../views/Volunteers.vue";
 import Profile from "../views/Profile.vue";
 import Login from "../views/Login.vue";
@@ -21,6 +22,7 @@ const router = createRouter({
     { path: "/announcements", name: "announcements", component: Announcements, meta: { requiresManager: true } },
     { path: "/calendar", name: "calendar", component: Calendar, meta: { requiresManager: true } },
     { path: "/registrations", name: "registrations", component: RegistrationsData, meta: { requiresManager: true } },
+    { path: "/qr-scanner", name: "qr-scanner", component: QrScanner, meta: { requiresManager: true } },
     { path: "/volunteers", name: "volunteers", component: Volunteers, meta: { requiresManager: true } },
     { path: "/profile", name: "profile", component: Profile, meta: { requiresAuth: true } },
     { path: "/login", name: "login", component: Login },

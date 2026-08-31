@@ -25,6 +25,18 @@ export default defineConfig({
           if (id.includes('node_modules/.pnpm/@firebase') || id.includes('node_modules/@firebase')) {
             return 'firebase'
           }
+          if (id.includes('node_modules/html5-qrcode') || id.includes('node_modules/qrcode')) {
+            return 'qr-scanner'
+          }
+          if (id.includes('node_modules/jspdf') || id.includes('node_modules/jspdf-autotable')) {
+            return 'pdf'
+          }
+          if (id.includes('node_modules/qrcode.vue')) {
+            return 'qr-code'
+          }
+          if (id.includes('node_modules/bootstrap')) {
+            return 'bootstrap'
+          }
         },
       },
     },
