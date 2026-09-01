@@ -175,14 +175,23 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "./stores/user";
 import LoadingScreen from "./components/LoadingScreen.vue";
+import bootstrap from "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const router = useRouter();
 const userStore = useUserStore();
 const navbar = ref(null);
+
+watch(() => router.currentRoute.value.path, () => {
+  const collapseEl = document.getElementById("navbarNav");
+  if (collapseEl && collapseEl.classList.contains("show")) {
+    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || new bootstrap.Collapse(collapseEl, { toggle: false });
+    bsCollapse.hide();
+  }
+});
 
 const userInitials = computed(() => {
   const username = userStore.username || "Guest";
