@@ -204,6 +204,20 @@ import { useUserStore } from "../stores/user";
 import QRCode from "qrcode.vue";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+import emailjs from "@emailjs/browser";
+import QRCodeLib from "qrcode";
+
+// EmailJS config
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID";
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
+
+// Google Drive config
+const GOOGLE_DRIVE_CLIENT_ID = import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID;
+const GOOGLE_DRIVE_FOLDER_ID = import.meta.env.VITE_GOOGLE_DRIVE_TICKET_REGISTRATION_FOLDER_ID;
+const GOOGLE_DRIVE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+
+const BURGUNDY = [114, 47, 55];
 
 const userStore = useUserStore();
 const regStore = useRegistrationsStore();
@@ -434,15 +448,191 @@ async function exportAllToPdf() {
   doc.save(`registrations-report-${new Date().toISOString().split("T")[0]}.pdf`);
 }
 
+// Google Drive upload functions
+let googleTokenClient = null;
+
+function initGoogleTokenClient() {
+  if (typeof window !== "undefined" && window.google && window.google.accounts && window.google.accounts.oauth2) {
+    googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_DRIVE_CLIENT_ID,
+      scope: "https://www.googleapis.com/auth/drive.file",
+      callback: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          window.googleDriveAccessToken = tokenResponse.access_token;
+          window.googleDriveTokenResolve?.(tokenResponse.access_token);
+        } else {
+          window.googleDriveTokenResolve?.(null);
+        }
+      },
+    });
+  }
+}
+
+function getGoogleDriveAccessToken() {
+  return new Promise((resolve) => {
+    if (window.googleDriveAccessToken) {
+      resolve(window.googleDriveAccessToken);
+      return;
+    }
+    
+    window.googleDriveTokenResolve = resolve;
+    
+    if (!googleTokenClient) {
+      initGoogleTokenClient();
+    }
+    
+    if (googleTokenClient) {
+      googleTokenClient.requestAccessToken({ prompt: "consent" });
+    } else {
+      console.error("Google Identity Services not loaded");
+      resolve(null);
+    }
+  });
+}
+
+async function uploadPdfToGoogleDrive(pdfBuffer, fileName, mimeType = "application/pdf") {
+  const accessToken = await getGoogleDriveAccessToken();
+  if (!accessToken) {
+    throw new Error("Failed to get Google Drive access token");
+  }
+
+  const metadata = {
+    name: fileName,
+    parents: [GOOGLE_DRIVE_FOLDER_ID],
+  };
+
+  const boundary = "-------multipartboundary-------";
+  const metadataPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
+  const filePart = `--${boundary}\r\nContent-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n${btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)))}\r\n--${boundary}--`;
+  const body = metadataPart + filePart;
+
+  const response = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,webContentLink",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/related; boundary="${boundary}"`,
+      },
+      body,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Google Drive upload failed: ${JSON.stringify(error)}`);
+  }
+
+  const file = await response.json();
+  
+  // Make file publicly viewable (anyone with link)
+  await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}/permissions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      role: "reader",
+      type: "anyone",
+    }),
+  });
+
+  return {
+    fileId: file.id,
+    viewLink: `https://drive.google.com/file/d/${file.id}/view`,
+    downloadLink: `https://drive.google.com/uc?export=download&id=${file.id}`,
+  };
+}
+
+async function generateTicketPdf(reg) {
+  const doc = new jsPDF();
+  
+  doc.setFontSize(18);
+  doc.setTextColor(...BURGUNDY);
+  doc.text("Concert Registration Ticket", 105, 18, { align: "center" });
+  
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Concert: ${reg.concertName}`, 14, 30);
+  doc.text(`Date: ${formatDate(reg.concertDate)}`, 14, 37);
+  doc.text(`Time: ${formatTime(reg.concertTime)}`, 14, 44);
+  if (reg.concertLocation) {
+    doc.text(`Location: ${reg.concertLocation}`, 14, 51);
+  }
+  
+  let y = reg.concertLocation ? 63 : 56;
+  doc.setFontSize(13);
+  doc.setTextColor(...BURGUNDY);
+  doc.text("Registrant Information", 14, y);
+  
+  y += 7;
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Name: ${reg.fullName}`, 14, y);
+  doc.text(`Email: ${reg.email}`, 14, y + 6);
+  doc.text(`Phone: ${reg.phone}`, 14, y + 12);
+  doc.text(`Total Attendees: ${reg.totalAttendance}`, 14, y + 18);
+  doc.text(`Registration ID: ${reg.id}`, 14, y + 24);
+  
+  y += 34;
+  doc.setFontSize(11);
+  doc.setTextColor(...BURGUNDY);
+  doc.text("QR Code", 105, y, { align: "center" });
+  
+  const qrDataUrl = await QRCodeLib.toDataURL(reg.qrCodeData, { width: 100, margin: 1 });
+  
+  y += 6;
+  doc.addImage(qrDataUrl, "PNG", 85, y, 40, 40);
+  
+  y += 45;
+  doc.setFontSize(7);
+  doc.setTextColor(100, 100, 100);
+  doc.text("GKI Menteng - Keep this ticket for entry", 105, y, { align: "center" });
+  
+  return doc.output("arraybuffer");
+}
+
+async function sendTicketEmailViaEmailJS(regData, driveLink) {
+  await emailjs.send(
+    EMAILJS_SERVICE_ID,
+    EMAILJS_TEMPLATE_ID,
+    {
+      to_email: regData.email,
+      to_name: regData.fullName,
+      concert_name: regData.concertName,
+      concert_date: formatDate(regData.concertDate),
+      concert_time: formatTime(regData.concertTime),
+      concert_location: regData.concertLocation || "—",
+      total_attendees: regData.totalAttendance,
+      registration_id: regData.id,
+      ticket_link: driveLink.viewLink,
+      download_link: driveLink.downloadLink,
+      file_id: driveLink.fileId,
+    },
+    EMAILJS_PUBLIC_KEY
+  );
+}
+
 async function resendEmail(reg) {
   resending.value = reg.id;
   try {
-    // In a real app, you'd call a Firebase Function or email service here
-    // For now, simulate sending
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert(`Email resent to ${reg.email} for ${reg.fullName}`);
+    // Generate PDF
+    const pdfBuffer = await generateTicketPdf(reg);
+    
+    // Upload to Google Drive
+    const fileName = `ticket-${reg.concertName.replace(/[^a-zA-Z0-9]/g, "-")}-${reg.fullName.replace(/[^a-zA-Z0-9]/g, "-")}-${reg.id}.pdf`;
+    console.log("Uploading PDF to Google Drive...");
+    const driveLink = await uploadPdfToGoogleDrive(pdfBuffer, fileName);
+    console.log("Google Drive upload successful:", driveLink);
+    
+    // Send email with Google Drive link
+    await sendTicketEmailViaEmailJS(reg, driveLink);
+    
+    alert(`Email sent to ${reg.email} with ticket link: ${driveLink.viewLink}`);
   } catch (err) {
-    alert("Failed to resend email: " + err.message);
+    console.error("Failed to send email:", err);
+    alert("Failed to send email: " + err.message);
   } finally {
     resending.value = null;
   }

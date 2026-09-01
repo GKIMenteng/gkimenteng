@@ -250,11 +250,15 @@ import { useUserStore } from "../stores/user";
 import QRCode from "qrcode.vue";
 import { db } from "../firebase";
 import { collection, serverTimestamp, query, where, getDocs, runTransaction, doc } from "firebase/firestore";
+import { jsPDF } from "jspdf";
+import QRCodeLib from "qrcode";
 
 const userStore = useUserStore();
 const eStore = useEventsStore();
 const route = useRoute();
 const router = useRouter();
+
+const BURGUNDY = [114, 47, 55];
 
 /* ---------- State ---------- */
 const registering = ref(false);
@@ -364,6 +368,60 @@ function downloadQrCode() {
   }
 }
 
+async function generateTicketPdf(regData) {
+  const doc = new jsPDF();
+  
+  // Header
+  doc.setFontSize(18);
+  doc.setTextColor(...BURGUNDY);
+  doc.text("Concert Registration Ticket", 105, 18, { align: "center" });
+  
+  // Concert info
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Concert: ${regData.concertName}`, 14, 30);
+  doc.text(`Date: ${formatDateDisplay(regData.concertDate)}`, 14, 37);
+  doc.text(`Time: ${formatTime(regData.concertTime)}`, 14, 44);
+  if (regData.concertLocation) {
+    doc.text(`Location: ${regData.concertLocation}`, 14, 51);
+  }
+  
+  // Registrant info
+  let y = regData.concertLocation ? 63 : 56;
+  doc.setFontSize(13);
+  doc.setTextColor(...BURGUNDY);
+  doc.text("Registrant Information", 14, y);
+  
+  y += 7;
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Name: ${regData.fullName}`, 14, y);
+  doc.text(`Email: ${regData.email}`, 14, y + 6);
+  doc.text(`Phone: ${regData.phone}`, 14, y + 12);
+  doc.text(`Total Attendees: ${regData.totalAttendance}`, 14, y + 18);
+  doc.text(`Registration ID: ${regData.registrationId}`, 14, y + 24);
+  
+  // QR Code - smaller to reduce PDF size
+  y += 34;
+  doc.setFontSize(11);
+  doc.setTextColor(...BURGUNDY);
+  doc.text("QR Code", 105, y, { align: "center" });
+  
+  // Generate QR code as data URL - smaller size
+  const qrDataUrl = await QRCodeLib.toDataURL(regData.qrCodeData, { width: 100, margin: 1 });
+  
+  y += 6;
+  doc.addImage(qrDataUrl, "PNG", 85, y, 40, 40);
+  
+  // Footer
+  y += 45;
+  doc.setFontSize(7);
+  doc.setTextColor(100, 100, 100);
+  doc.text("GKI Menteng - Keep this ticket for entry", 105, y, { align: "center" });
+  
+  return doc.output("arraybuffer");
+}
+
 async function handleRegistration() {
   registering.value = true;
   registrationError.value = "";
@@ -404,6 +462,7 @@ async function handleRegistration() {
 
     const user = userStore.user;
     const requestedAttendees = regForm.value.totalAttendance;
+    let registrationId = "";
 
     // Use transaction for atomic capacity check + registration
     await runTransaction(db, async (transaction) => {
@@ -429,6 +488,7 @@ async function handleRegistration() {
 
       // Atomic write: create registration document
       const newRegRef = doc(registrationsRef);
+      registrationId = newRegRef.id;
       transaction.set(newRegRef, {
         concertId: concert.concertId,
         concertName: concert.name || "",
@@ -445,6 +505,38 @@ async function handleRegistration() {
         createdAt: serverTimestamp(),
       });
     });
+
+    // Generate PDF and auto-download as proof of registration
+    try {
+      const pdfBuffer = await generateTicketPdf({
+        concertName: concert.name || "",
+        concertDate: concert.date || "",
+        concertTime: concert.time || "",
+        concertLocation: concert.location || "",
+        fullName: regForm.value.fullName.trim(),
+        email: regForm.value.email.trim(),
+        phone: regForm.value.phone.trim(),
+        totalAttendance: requestedAttendees,
+        qrCodeData: qrData,
+        registrationId,
+      });
+      
+      // Auto-download PDF
+      const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `registration-proof-${concert.name.replace(/[^a-zA-Z0-9]/g, "-")}-${regForm.value.fullName.trim().replace(/[^a-zA-Z0-9]/g, "-")}-${registrationId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log("Registration proof PDF downloaded");
+    } catch (pdfErr) {
+      console.error("Failed to generate/download PDF:", pdfErr);
+      // Don't fail registration if PDF fails
+    }
 
     registrationSuccess.value = true;
     
