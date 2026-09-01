@@ -140,10 +140,6 @@
                   <i class="bi bi-people" style="color: var(--gold); width: 18px;"></i>
                   <span>Capacity: {{ concertEvent.capacity }}</span>
                 </div>
-                <div class="d-flex align-items-center gap-2" v-if="concertEvent.concertId">
-                  <i class="bi bi-ticket-perforated" style="color: var(--gold); width: 18px;"></i>
-                  <span>Concert ID: {{ concertEvent.concertId }}</span>
-                </div>
               </div>
               <p v-if="concertEvent.notes" class="mt-3 text-muted small" style="font-style: italic;">
                 {{ concertEvent.notes }}
@@ -253,7 +249,7 @@ import { useEventsStore } from "../stores/events";
 import { useUserStore } from "../stores/user";
 import QRCode from "qrcode.vue";
 import { db } from "../firebase";
-import { addDoc, collection, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, serverTimestamp, query, where, getDocs, runTransaction, doc } from "firebase/firestore";
 
 const userStore = useUserStore();
 const eStore = useEventsStore();
@@ -396,61 +392,62 @@ async function handleRegistration() {
 
   const concert = concertEvent.value;
   
-  // Check capacity
-  if (concert?.capacity) {
-    try {
-      // Fetch existing registrations for this concert to calculate current attendees
-      const q = query(collection(db, "registrations"), where("concertId", "==", concert.concertId));
-      const snapshot = await getDocs(q);
-      
-      const currentAttendees = snapshot.docs.reduce((sum, doc) => {
-        const data = doc.data();
-        return sum + (data.totalAttendance || 0);
-      }, 0);
-      
-      const requestedAttendees = regForm.value.totalAttendance;
-      const availableSpots = concert.capacity - currentAttendees;
-      
-      if (requestedAttendees > availableSpots) {
-        registrationError.value = availableSpots <= 0 
-          ? "This concert has reached maximum capacity."
-          : `Only ${availableSpots} spot${availableSpots !== 1 ? 's' : ''} remaining. You requested ${requestedAttendees}.`;
-        registering.value = false;
-        return;
-      }
-    } catch (err) {
-      console.warn("Capacity check failed:", err);
-      // Continue with registration if check fails (fail-open)
-    }
+  if (!concert?.concertId) {
+    registrationError.value = "Concert information not found.";
+    registering.value = false;
+    return;
   }
 
   try {
-    // Generate QR code data
     const qrData = generateQrCodeData();
     qrCodeData.value = qrData;
 
-    // Save registration to Firestore
     const user = userStore.user;
-    
-    await addDoc(collection(db, "registrations"), {
-      concertId: concert?.concertId || "",
-      concertName: concert?.name || "",
-      concertDate: concert?.date || "",
-      concertTime: concert?.time || "",
-      concertLocation: concert?.location || "",
-      fullName: regForm.value.fullName.trim(),
-      email: regForm.value.email.trim(),
-      phone: regForm.value.phone.trim(),
-      totalAttendance: regForm.value.totalAttendance,
-      qrCodeData: qrData,
-      userId: user?.uid || null,
-      userEmail: user?.email || null,
-      createdAt: serverTimestamp(),
+    const requestedAttendees = regForm.value.totalAttendance;
+
+    // Use transaction for atomic capacity check + registration
+    await runTransaction(db, async (transaction) => {
+      const registrationsRef = collection(db, "registrations");
+      const q = query(registrationsRef, where("concertId", "==", concert.concertId));
+      const snapshot = await getDocs(q);
+      
+      const currentAttendees = snapshot.docs.reduce((sum, docSnap) => {
+        const data = docSnap.data();
+        return sum + (data.totalAttendance || 0);
+      }, 0);
+      
+      if (concert.capacity) {
+        const availableSpots = concert.capacity - currentAttendees;
+        if (requestedAttendees > availableSpots) {
+          throw new Error(
+            availableSpots <= 0 
+              ? "This concert has reached maximum capacity."
+              : `Only ${availableSpots} spot${availableSpots !== 1 ? 's' : ''} remaining. You requested ${requestedAttendees}.`
+          );
+        }
+      }
+
+      // Atomic write: create registration document
+      const newRegRef = doc(registrationsRef);
+      transaction.set(newRegRef, {
+        concertId: concert.concertId,
+        concertName: concert.name || "",
+        concertDate: concert.date || "",
+        concertTime: concert.time || "",
+        concertLocation: concert.location || "",
+        fullName: regForm.value.fullName.trim(),
+        email: regForm.value.email.trim(),
+        phone: regForm.value.phone.trim(),
+        totalAttendance: requestedAttendees,
+        qrCodeData: qrData,
+        userId: user?.uid || null,
+        userEmail: user?.email || null,
+        createdAt: serverTimestamp(),
+      });
     });
 
     registrationSuccess.value = true;
     
-    // Optionally redirect back to list after a delay
     setTimeout(() => {
       router.push("/registration");
     }, 5000);

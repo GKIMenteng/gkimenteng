@@ -86,8 +86,8 @@ service cloud.firestore {
       // Anyone can create a registration (no auth required for concert registration)
       allow create: if true;
 
-      // Only managers can read all registrations
-      allow read: if request.auth != null && isManager();
+      // Allow reading registrations for capacity checking (public concerts)
+      allow read: if true;
 
       // Only managers can update/delete registrations
       allow update: if request.auth != null && isManager();
