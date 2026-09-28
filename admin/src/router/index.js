@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "../stores/user";
 import Home from "../views/Home.vue";
-import Announcements from "../views/Announcements.vue";
 import News from "../views/News.vue";
 import Calendar from "../views/Calendar.vue";
 import RegistrationsData from "../views/RegistrationsData.vue";
@@ -19,7 +18,7 @@ const router = createRouter({
   routes: [
     { path: "/", name: "home", component: Home, meta: { requiresManager: true } },
     { path: "/news", name: "news", component: News, meta: { requiresManager: true } },
-    { path: "/announcements", name: "announcements", component: Announcements, meta: { requiresManager: true } },
+    
     { path: "/calendar", name: "calendar", component: Calendar, meta: { requiresManager: true } },
     { path: "/registrations", name: "registrations", component: RegistrationsData, meta: { requiresManager: true } },
     { path: "/qr-scanner", name: "qr-scanner", component: QrScanner, meta: { requiresManager: true } },

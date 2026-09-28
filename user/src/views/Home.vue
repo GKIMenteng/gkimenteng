@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <!-- Upcoming Events & Latest News -->
+    <!-- Upcoming Events -->
     <div class="row g-4">
       <div class="col-lg-6 animate-fade-in-up animate-stagger-1">
         <div class="church-card h-100">
@@ -99,13 +99,6 @@
                 </div>
                 <h6 class="mb-2" style="color: var(--burgundy)">{{ item.title }}</h6>
                 <p class="mb-2" style="font-size: 0.9rem">{{ item.excerpt }}</p>
-                <router-link
-                  to="/announcements"
-                  class="text-decoration-none fw-medium"
-                  style="color: var(--gold); font-size: 0.85rem"
-                >
-                  Read more <i class="bi bi-arrow-right ms-1"></i>
-                </router-link>
               </div>
               <hr v-if="index < latestNews.length - 1" class="church-divider-solid" />
             </div>
@@ -119,14 +112,11 @@
 <script setup>
 import { onMounted, computed } from "vue";
 import { useEventsStore } from "../stores/events";
-import { useAnnouncementsStore } from "../stores/announcement";
 
 const eStore = useEventsStore();
-const aStore = useAnnouncementsStore();
 
 onMounted(() => {
   eStore.fetchEvents();
-  aStore.fetchAnnouncements();
 });
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -147,32 +137,6 @@ const upcomingEvents = computed(() => {
         month: months[d.getMonth()],
         time: ev.time || "",
         description: ev.location || ev.notes || "",
-      };
-    });
-});
-
-const latestNews = computed(() => {
-  return aStore.announcements
-    .filter((a) => {
-      const start = a.startPublishDate || a.date;
-      if (!start || start > today) return false;
-      if (a.endPublishDate && a.endPublishDate < today) return false;
-      return true;
-    })
-    .slice(0, 3)
-    .map((a) => {
-      const d = new Date((a.startPublishDate || a.date) + "T00:00:00");
-      const dateStr = d.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      return {
-        id: a.id,
-        title: a.title,
-        date: dateStr,
-        category: a.category,
-        excerpt: a.content ? a.content.slice(0, 100) + (a.content.length > 100 ? "..." : "") : "",
       };
     });
 });

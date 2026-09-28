@@ -5,7 +5,7 @@
         <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
       </h1>
       <p class="lead fs-5" style="color: var(--dark-light); max-width: 680px; margin: 0 auto">
-        Manage announcements, weekly news documents, calendar events, and volunteer data.
+        Manage weekly news documents, calendar events, and volunteer data.
       </p>
       <span class="verse-ref">Signed in as {{ userStore.username }} - {{ roleLabel }}</span>
     </div>
@@ -76,20 +76,29 @@
       <div class="col-lg-6">
         <div class="church-card h-100">
           <div class="church-card-header d-flex align-items-center">
-            <i class="bi bi-megaphone me-2"></i>Recent Announcements
+            <i class="bi bi-calendar-event me-2"></i>Upcoming Events
           </div>
           <div class="card-body">
-            <div v-if="recentAnnouncements.length === 0" class="text-muted">No announcements published yet.</div>
-            <div v-for="(item, index) in recentAnnouncements" :key="item.id">
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <span class="badge-church" style="font-size: 0.7rem">{{ item.category || "General" }}</span>
-                  <small class="text-muted">{{ item.date }}</small>
+            <div v-if="upcomingEvents.length === 0" class="text-muted">No upcoming events scheduled.</div>
+            <div v-for="(event, index) in upcomingEvents" :key="event.id">
+              <div class="d-flex gap-3">
+                <div class="text-center flex-shrink-0" style="width: 50px">
+                  <div class="fw-bold fs-4" style="color: var(--burgundy); font-family: var(--font-heading); line-height: 1">
+                    {{ event.day }}
+                  </div>
+                  <div style="color: var(--gold); font-size: 0.75rem; font-weight: 600; text-transform: uppercase">
+                    {{ event.month }}
+                  </div>
                 </div>
-                <h6 class="mb-2" style="color: var(--burgundy)">{{ item.title }}</h6>
-                <p class="mb-0" style="font-size: 0.9rem">{{ item.excerpt }}</p>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1" style="color: var(--burgundy)">{{ event.title }}</h6>
+                  <p class="mb-1" style="font-size: 0.85rem; color: var(--dark-light)">
+                    <i class="bi bi-clock me-1"></i>{{ event.time || "No time set" }}
+                  </p>
+                  <p class="mb-0" style="font-size: 0.9rem">{{ event.description }}</p>
+                </div>
               </div>
-              <hr v-if="index < recentAnnouncements.length - 1" class="church-divider-solid" />
+              <hr v-if="index < upcomingEvents.length - 1" class="church-divider-solid" />
             </div>
           </div>
         </div>
@@ -102,13 +111,11 @@
 import { computed, onMounted, ref } from "vue";
 import { useUserStore } from "../stores/user";
 import { useEventsStore } from "../stores/events";
-import { useAnnouncementsStore } from "../stores/announcement";
 import { useVolunteersStore } from "../stores/volunteers";
 import { getPDFs } from "../services/googleDrive";
 
 const userStore = useUserStore();
 const eStore = useEventsStore();
-const aStore = useAnnouncementsStore();
 const vStore = useVolunteersStore();
 const documentCount = ref("...");
 
@@ -120,15 +127,6 @@ const roleLabel = computed(() => {
   return labels[userStore.role] || "Manager";
 });
 
-const activeAnnouncements = computed(() => {
-  return aStore.announcements.filter((a) => {
-    const start = a.startPublishDate || a.date;
-    if (!start || start > today) return false;
-    if (a.endPublishDate && a.endPublishDate < today) return false;
-    return true;
-  });
-});
-
 const upcomingEventsRaw = computed(() => {
   return eStore.events
     .filter((ev) => ev.date >= today)
@@ -136,19 +134,12 @@ const upcomingEventsRaw = computed(() => {
 });
 
 const stats = computed(() => [
-  { label: "Announcements", value: activeAnnouncements.value.length, icon: "bi bi-megaphone" },
   { label: "Weekly News", value: documentCount.value, icon: "bi bi-file-earmark-pdf" },
   { label: "Upcoming Events", value: upcomingEventsRaw.value.length, icon: "bi bi-calendar-event" },
   { label: "Volunteers", value: vStore.volunteers.length, icon: "bi bi-people" },
 ]);
 
 const actions = [
-  {
-    to: "/announcements",
-    icon: "bi bi-megaphone",
-    title: "Add Announcement",
-    description: "Create, edit, delete, publish, and archive church announcements.",
-  },
   {
     to: "/news",
     icon: "bi bi-cloud-upload",
@@ -183,22 +174,8 @@ const upcomingEvents = computed(() => {
   });
 });
 
-const recentAnnouncements = computed(() => {
-  return aStore.announcements.slice(0, 4).map((a) => {
-    const d = new Date((a.startPublishDate || a.date || today) + "T00:00:00");
-    return {
-      id: a.id,
-      title: a.title,
-      category: a.category,
-      date: d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-      excerpt: a.content ? a.content.slice(0, 110) + (a.content.length > 110 ? "..." : "") : "",
-    };
-  });
-});
-
 onMounted(async () => {
   eStore.fetchEvents();
-  aStore.fetchAnnouncements();
   vStore.fetchVolunteers();
 
   try {
