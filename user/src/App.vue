@@ -97,11 +97,7 @@
     </nav>
 
     <main class="container my-4 my-lg-5">
-      <router-view v-slot="{ Component }">
-        <Transition name="page" mode="out-in">
-          <component :is="Component" />
-        </Transition>
-      </router-view>
+      <router-view />
     </main>
 
     <footer v-if="!userStore.loading" class="church-footer">

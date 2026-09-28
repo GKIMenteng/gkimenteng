@@ -151,18 +151,18 @@
                       <i class="bi bi-person-badge me-1" style="color: var(--gold);"></i>{{ ev.pastor }}
                     </p>
                     <template v-if="ev.volunteers">
-                      <p v-for="(names, pos) in ev.volunteers" :key="pos" v-if="names && names.length" class="mb-1" style="font-size: 0.85rem;">
-                        <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
-                        <strong>{{ pos }}:</strong> {{ names.join(', ') }}
-                      </p>
+                      <template v-for="(names, pos) in ev.volunteers" :key="pos">
+                        <p v-if="names && names.length" class="mb-1" style="font-size: 0.85rem;">
+                          <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
+                          <strong>{{ pos }}:</strong> {{ names.join(', ') }}
+                        </p>
+                      </template>
                     </template>
                     <p v-else-if="ev.volunteerNames && ev.volunteerNames.length" class="mb-1" style="font-size: 0.85rem;">
                       <i class="bi bi-people me-1" style="color: var(--gold);"></i>
                       {{ ev.volunteerNames.join(', ') }}
                     </p>
-                    <p v-if="ev.notes" class="mb-0 text-muted mt-1" style="font-size: 0.8rem; font-style: italic;">
-                      <i class="bi bi-chat-quote me-1"></i>{{ ev.notes }}
-                    </p>
+                    <div v-if="ev.notes" class="mb-0 text-muted mt-1 notes-rich-preview" v-html="ev.notes"></div>
                   </div>
                   <div v-if="userStore.isManager" class="d-flex gap-1 ms-3 flex-shrink-0">
                     <button class="btn btn-church-ghost btn-sm py-1" @click="editEventFromDay(ev)" title="Edit">
@@ -228,10 +228,12 @@
                         <i class="bi bi-person-badge me-1" style="color: var(--gold);"></i>{{ ev.pastor }}
                       </p>
                       <template v-if="ev.volunteers">
-                        <p v-for="(names, pos) in ev.volunteers" :key="pos" v-if="names && names.length" class="mb-1" style="font-size: 0.85rem;">
-                          <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
-                          <strong>{{ pos }}:</strong> {{ names.join(', ') }}
-                        </p>
+                        <template v-for="(names, pos) in ev.volunteers" :key="pos">
+                          <p v-if="names && names.length" class="mb-1" style="font-size: 0.85rem;">
+                            <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
+                            <strong>{{ pos }}:</strong> {{ names.join(', ') }}
+                          </p>
+                        </template>
                       </template>
                       <p v-else-if="ev.volunteerNames && ev.volunteerNames.length" class="mb-1" style="font-size: 0.85rem;">
                         <i class="bi bi-people me-1" style="color: var(--gold);"></i>
@@ -239,9 +241,7 @@
                           {{ vn }}<span v-if="vi < ev.volunteerNames.length - 1">, </span>
                         </span>
                       </p>
-                      <p v-if="ev.notes" class="mb-0 text-muted" style="font-size: 0.8rem; font-style: italic;">
-                        {{ ev.notes }}
-                      </p>
+                      <div v-if="ev.notes" class="mb-0 text-muted notes-rich-preview" v-html="ev.notes"></div>
                     </div>
                   </div>
                   <div v-if="userStore.isManager" class="d-flex gap-1 mt-2 justify-content-end">
@@ -459,12 +459,28 @@
                 <label class="form-label d-flex align-items-center gap-2">
                   <i class="bi bi-journal-text" style="color: var(--gold);"></i>Notes
                 </label>
-                <textarea
-                  class="form-control"
-                  v-model="form.notes"
-                  rows="3"
-                  placeholder="Additional notes or instructions..."
-                ></textarea>
+                <div class="rich-text-editor">
+                  <div class="rich-text-toolbar" role="toolbar" aria-label="Notes formatting toolbar">
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('bold')" title="Bold"><strong>B</strong></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('italic')" title="Italic"><em>I</em></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('underline')" title="Underline"><span style="text-decoration: underline;">U</span></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('formatBlock', 'p')" title="Paragraph">P</button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('insertUnorderedList')" title="Bullet list"><i class="bi bi-list-ul"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('insertOrderedList')" title="Numbered list"><i class="bi bi-list-ol"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('justifyLeft')" title="Align left"><i class="bi bi-text-left"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('justifyCenter')" title="Align center"><i class="bi bi-text-center"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('justifyRight')" title="Align right"><i class="bi bi-text-right"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('removeFormat')" title="Clear formatting"><i class="bi bi-eraser"></i></button>
+                  </div>
+                  <div
+                    ref="notesEditor"
+                    class="form-control rich-text-content"
+                    contenteditable="true"
+                    data-placeholder="Additional notes or instructions..."
+                    @input="updateNotesFromEditor"
+                    @paste="handleEditorPaste"
+                  ></div>
+                </div>
               </div>
             </template>
 
@@ -500,12 +516,28 @@
                 <label class="form-label d-flex align-items-center gap-2">
                   <i class="bi bi-journal-text" style="color: var(--gold);"></i>Notes
                 </label>
-                <textarea
-                  class="form-control"
-                  v-model="form.notes"
-                  rows="3"
-                  placeholder="Additional notes or instructions..."
-                ></textarea>
+                <div class="rich-text-editor">
+                  <div class="rich-text-toolbar" role="toolbar" aria-label="Notes formatting toolbar">
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('bold')" title="Bold"><strong>B</strong></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('italic')" title="Italic"><em>I</em></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('underline')" title="Underline"><span style="text-decoration: underline;">U</span></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('formatBlock', 'p')" title="Paragraph">P</button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('insertUnorderedList')" title="Bullet list"><i class="bi bi-list-ul"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('insertOrderedList')" title="Numbered list"><i class="bi bi-list-ol"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('justifyLeft')" title="Align left"><i class="bi bi-text-left"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('justifyCenter')" title="Align center"><i class="bi bi-text-center"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('justifyRight')" title="Align right"><i class="bi bi-text-right"></i></button>
+                    <button type="button" class="rich-text-btn" @mousedown.prevent @click="execEditorCommand('removeFormat')" title="Clear formatting"><i class="bi bi-eraser"></i></button>
+                  </div>
+                  <div
+                    ref="notesEditor"
+                    class="form-control rich-text-content"
+                    contenteditable="true"
+                    data-placeholder="Additional notes or instructions..."
+                    @input="updateNotesFromEditor"
+                    @paste="handleEditorPaste"
+                  ></div>
+                </div>
               </div>
             </template>
 
@@ -684,15 +716,17 @@
 
           <!-- Volunteers by position -->
           <template v-if="detailEvent?.volunteers">
-            <div v-for="(names, pos) in detailEvent.volunteers" :key="pos" v-if="names && names.length" class="d-flex align-items-center gap-3">
-              <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
-                <i :class="posIcon(pos)" style="color: var(--gold); font-size: 0.9rem;"></i>
+            <template v-for="(names, pos) in detailEvent.volunteers" :key="pos">
+              <div v-if="names && names.length" class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
+                  <i :class="posIcon(pos)" style="color: var(--gold); font-size: 0.9rem;"></i>
+                </div>
+                <div>
+                  <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">{{ pos }}</p>
+                  <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ names.join(', ') }}</p>
+                </div>
               </div>
-              <div>
-                <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">{{ pos }}</p>
-                <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ names.join(', ') }}</p>
-              </div>
-            </div>
+            </template>
           </template>
           <div v-else-if="detailEvent?.volunteerNames && detailEvent.volunteerNames.length" class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
@@ -705,13 +739,13 @@
           </div>
 
           <!-- Notes -->
-          <div v-if="detailEvent?.notes" class="d-flex gap-3">
+          <div v-if="detailEvent?.notes" class="d-flex gap-3 align-items-start">
             <div class="d-flex align-items-start justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background: rgba(201, 168, 76, 0.12);">
               <i class="bi bi-chat-quote" style="color: var(--gold); font-size: 0.9rem;"></i>
             </div>
-            <div>
+            <div class="flex-grow-1">
               <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Notes</p>
-              <p class="mb-0" style="color: var(--burgundy); font-style: italic;">{{ detailEvent.notes }}</p>
+              <div class="notes-rich-content" v-html="detailEvent.notes"></div>
             </div>
           </div>
 
@@ -896,7 +930,71 @@ const form = reactive({
   concertId: "",
 });
 
+const notesEditor = ref(null);
 const hasStreaming = ref(false);
+
+function syncEditorFromForm() {
+  if (!notesEditor.value) return;
+  notesEditor.value.innerHTML = form.notes || "";
+}
+
+function sanitizeEditorHtml(html) {
+  if (!html) return "";
+
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+
+  const allowedTags = new Set(["B", "STRONG", "I", "EM", "U", "UL", "OL", "LI", "P", "BR", "SPAN", "DIV"]);
+  const nodes = temp.querySelectorAll("*");
+
+  nodes.forEach((node) => {
+    if (!allowedTags.has(node.tagName)) {
+      const fragment = document.createDocumentFragment();
+      while (node.firstChild) fragment.appendChild(node.firstChild);
+      node.replaceWith(fragment);
+      return;
+    }
+
+    [...node.attributes].forEach((attr) => {
+      if (attr.name !== "style") {
+        node.removeAttribute(attr.name);
+      }
+    });
+
+    if (node.style && node.style.cssText) {
+      const safeStyle = node.style.cssText
+        .split(";")
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .filter((part) => /text-align|margin|padding|list-style-type/i.test(part))
+        .join("; ");
+
+      node.setAttribute("style", safeStyle ? safeStyle + ";" : "");
+    }
+  });
+
+  return temp.innerHTML;
+}
+
+function updateNotesFromEditor(event) {
+  form.notes = event.target.innerHTML;
+}
+
+function handleEditorPaste(event) {
+  event.preventDefault();
+  const clipboard = event.clipboardData || window.clipboardData;
+  const pasted = clipboard.getData("text/html") || clipboard.getData("text/plain");
+  const sanitized = sanitizeEditorHtml(pasted);
+  document.execCommand("insertHTML", false, sanitized || pasted);
+  form.notes = notesEditor.value.innerHTML;
+}
+
+function execEditorCommand(command, value = null) {
+  if (!notesEditor.value) return;
+  notesEditor.value.focus();
+  document.execCommand(command, false, value);
+  form.notes = notesEditor.value.innerHTML;
+}
 
 function emptyForm() {
   form.name = "";
@@ -955,6 +1053,7 @@ function openCreateModal() {
   form.date = new Date().toISOString().slice(0, 10);
   form.time = "09:00";
   showModal.value = true;
+  setTimeout(() => syncEditorFromForm(), 0);
 }
 
 function openEditModal(ev) {
@@ -994,9 +1093,13 @@ function openEditModal(ev) {
     }
   }
   showModal.value = true;
+  setTimeout(() => syncEditorFromForm(), 0);
 }
 
 function closeModal() {
+  if (notesEditor.value) {
+    notesEditor.value.innerHTML = "";
+  }
   showModal.value = false;
 }
 
@@ -1242,6 +1345,78 @@ onMounted(() => {
   color: var(--burgundy-dark);
   font-size: 0.7rem;
   font-weight: 700;
+}
+
+.rich-text-editor {
+  border: 1px solid rgba(122, 68, 46, 0.18);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.rich-text-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(122, 68, 46, 0.12);
+  background: rgba(245, 240, 232, 0.7);
+}
+
+.rich-text-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(122, 68, 46, 0.18);
+  border-radius: 8px;
+  background: white;
+  color: var(--burgundy);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+.rich-text-btn:hover {
+  border-color: rgba(122, 68, 46, 0.38);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.rich-text-content {
+  width: 100%;
+  min-height: 120px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.85rem 1rem;
+  line-height: 1.6;
+  color: var(--dark);
+  resize: vertical;
+}
+
+.rich-text-content:empty::before {
+  content: attr(data-placeholder);
+  color: #8d8d8d;
+}
+
+.notes-rich-content {
+  color: var(--burgundy);
+  line-height: 1.6;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.notes-rich-content p,
+.notes-rich-content ul,
+.notes-rich-content ol {
+  margin-bottom: 0.5rem;
+}
+
+.notes-rich-content ul,
+.notes-rich-content ol {
+  padding-left: 1.25rem;
 }
 
 .cursor-pointer {

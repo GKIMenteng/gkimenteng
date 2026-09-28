@@ -30,7 +30,7 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const userStore = useUserStore();
 
   if (userStore.loading) {
@@ -38,18 +38,22 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if ((to.meta.requiresAuth || to.meta.requiresManager) && !userStore.isAuthenticated) {
-    next({ name: "login", query: { redirect: to.fullPath } });
-  } else if (to.meta.requiresManager && !userStore.isManager) {
-    next({ name: "unauthorized" });
-  } else if (to.name === "login" && userStore.isAuthenticated) {
-    if (userStore.isManager) {
-      next({ name: "home" });
-    } else {
-      next({ name: "unauthorized" });
-    }
-  } else {
-    next();
+    return { name: "login", query: { redirect: to.fullPath } };
   }
+
+  if (to.meta.requiresManager && !userStore.isManager) {
+    return { name: "unauthorized" };
+  }
+
+  if (to.name === "login" && userStore.isAuthenticated) {
+    if (userStore.isManager) {
+      return { name: "home" };
+    }
+
+    return { name: "unauthorized" };
+  }
+
+  return true;
 });
 
 export default router;

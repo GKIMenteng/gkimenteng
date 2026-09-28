@@ -31,7 +31,7 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const userStore = useUserStore();
 
   if (userStore.loading) {
@@ -39,12 +39,14 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
-    next({ name: "login", query: { redirect: to.fullPath } });
-  } else if ((to.name === "login" || to.name === "register") && userStore.isAuthenticated) {
-    next({ name: "home" });
-  } else {
-    next();
+    return { name: "login", query: { redirect: to.fullPath } };
   }
+
+  if ((to.name === "login" || to.name === "register") && userStore.isAuthenticated) {
+    return { name: "home" };
+  }
+
+  return true;
 });
 
 export default router;

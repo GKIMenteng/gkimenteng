@@ -116,10 +116,12 @@
                   <i class="bi bi-person-badge me-1" style="color: var(--gold);"></i>{{ ev.pastor }}
                 </p>
                 <template v-if="ev.volunteers">
-                  <p v-for="(names, pos) in ev.volunteers" :key="pos" v-show="names && names.length" class="mb-1" style="font-size: 0.85rem;">
-                    <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
-                    <strong>{{ pos }}:</strong> {{ names.join(", ") }}
-                  </p>
+                  <template v-for="(names, pos) in ev.volunteers" :key="pos">
+                    <p v-show="names && names.length" class="mb-1" style="font-size: 0.85rem;">
+                      <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
+                      <strong>{{ pos }}:</strong> {{ names.join(", ") }}
+                    </p>
+                  </template>
                 </template>
                 <p v-else-if="ev.volunteerNames && ev.volunteerNames.length" class="mb-1" style="font-size: 0.85rem;">
                   <i class="bi bi-people me-1" style="color: var(--gold);"></i>
@@ -173,10 +175,12 @@
                         <i class="bi bi-person-badge me-1" style="color: var(--gold);"></i>{{ ev.pastor }}
                       </p>
                       <template v-if="ev.volunteers">
-                        <p v-for="(names, pos) in ev.volunteers" :key="pos" v-show="names && names.length" class="mb-1" style="font-size: 0.85rem;">
-                          <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
-                          <strong>{{ pos }}:</strong> {{ names.join(", ") }}
-                        </p>
+                        <template v-for="(names, pos) in ev.volunteers" :key="pos">
+                          <p v-show="names && names.length" class="mb-1" style="font-size: 0.85rem;">
+                            <i :class="posIcon(pos)" class="me-1" style="color: var(--gold);"></i>
+                            <strong>{{ pos }}:</strong> {{ names.join(", ") }}
+                          </p>
+                        </template>
                       </template>
                       <p v-else-if="ev.volunteerNames && ev.volunteerNames.length" class="mb-1" style="font-size: 0.85rem;">
                         <i class="bi bi-people me-1" style="color: var(--gold);"></i>
@@ -260,15 +264,17 @@
             </div>
 
             <template v-if="detailEvent?.volunteers">
-              <div v-for="(names, pos) in detailEvent.volunteers" :key="pos" v-show="names && names.length" class="d-flex align-items-center gap-3">
-                <div class="event-detail-icon">
-                  <i :class="posIcon(pos)"></i>
+              <template v-for="(names, pos) in detailEvent.volunteers" :key="pos">
+                <div v-show="names && names.length" class="d-flex align-items-center gap-3">
+                  <div class="event-detail-icon">
+                    <i :class="posIcon(pos)"></i>
+                  </div>
+                  <div>
+                    <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">{{ pos }}</p>
+                    <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ names.join(", ") }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">{{ pos }}</p>
-                  <p class="mb-0 fw-medium" style="color: var(--burgundy);">{{ names.join(", ") }}</p>
-                </div>
-              </div>
+              </template>
             </template>
             <div v-else-if="detailEvent?.volunteerNames && detailEvent.volunteerNames.length" class="d-flex align-items-center gap-3">
               <div class="event-detail-icon">
@@ -280,13 +286,13 @@
               </div>
             </div>
 
-            <div v-if="detailEvent?.notes" class="d-flex gap-3">
+            <div v-if="detailEvent?.notes" class="d-flex gap-3 align-items-start">
               <div class="event-detail-icon">
                 <i class="bi bi-chat-quote"></i>
               </div>
-              <div>
+              <div class="flex-grow-1">
                 <p class="mb-0" style="font-size: 0.8rem; color: var(--dark-light);">Notes</p>
-                <p class="mb-0" style="color: var(--burgundy); font-style: italic;">{{ detailEvent.notes }}</p>
+                <div class="notes-rich-content" v-html="detailEvent.notes"></div>
               </div>
             </div>
           </div>
@@ -519,6 +525,24 @@ onMounted(() => {
   background: rgba(201, 168, 76, 0.12);
   color: var(--gold);
   font-size: 0.9rem;
+}
+
+.notes-rich-content {
+  color: var(--burgundy);
+  line-height: 1.6;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.notes-rich-content p,
+.notes-rich-content ul,
+.notes-rich-content ol {
+  margin-bottom: 0.5rem;
+}
+
+.notes-rich-content ul,
+.notes-rich-content ol {
+  padding-left: 1.25rem;
 }
 
 .cursor-pointer {
